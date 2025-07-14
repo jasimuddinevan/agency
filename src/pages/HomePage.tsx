@@ -9,12 +9,14 @@ import CTASection from '../components/home/CTASection';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-16 lg:pt-18">
       {/* Section 1: Hero */}
       <HeroSection />
       
       {/* Section 2: Services */}
-      <ServicesSection />
+      <div id="services">
+        <ServicesSection />
+      </div>
       
       {/* Section 3: Stats/Metrics */}
       <StatsSection />
@@ -23,13 +25,17 @@ const HomePage: React.FC = () => {
       <ProcessSection />
       
       {/* Section 5: Testimonials */}
-      <TestimonialsSection />
+      <div id="testimonials">
+        <TestimonialsSection />
+      </div>
       
       {/* Section 6: Trust & Certifications */}
       <TrustSection />
       
       {/* Section 7: CTA */}
-      <CTASection />
+      <div id="contact">
+        <CTASection />
+      </div>
     </div>
   );
 };
