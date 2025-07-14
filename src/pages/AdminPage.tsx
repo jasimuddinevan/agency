@@ -4,59 +4,33 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import {
-  HomeIcon,
-  DocumentTextIcon,
-  UserGroupIcon,
-  CogIcon,
-  ArrowRightOnRectangleIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-  ChevronUpDownIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  XCircleIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  ChatBubbleLeftIcon,
-  ChartBarIcon,
-  CalendarIcon,
-  UsersIcon,
-  DocumentDuplicateIcon
-} from '@heroicons/react/24/outline';
+import { UsersIcon, CogIcon } from '@heroicons/react/24/outline';
 
-interface Application {
-  id: string;
-  business_name: string;
-  website_url: string;
-  business_description: string;
-  industry: string;
-  monthly_revenue: string;
-  full_name: string;
-  email: string;
-  phone: string;
-  address: string;
-  preferred_contact: string;
-  status: 'new' | 'in_progress' | 'contacted' | 'approved' | 'rejected';
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Import admin components
+import AdminSidebar from '../components/admin/layout/AdminSidebar';
+import AdminHeader from '../components/admin/layout/AdminHeader';
+import DashboardStats from '../components/admin/dashboard/DashboardStats';
+import ApplicationList from '../components/admin/applications/ApplicationList';
+import ApplicationDetails from '../components/admin/applications/ApplicationDetails';
+import ApplicationEditForm from '../components/admin/applications/ApplicationEditForm';
+import ConfirmationModal from '../components/admin/common/ConfirmationModal';
+
+// Import types
+import { Application, DashboardStats as StatsType, BreadcrumbItem } from '../types/admin';
 
 const AdminPage: React.FC = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [applications, setApplications] = useState<Application[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [stats, setStats] = useState({
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<StatsType>({
     total: 0,
     new: 0,
     in_progress: 0,
@@ -71,11 +45,8 @@ const AdminPage: React.FC = () => {
     }
   }, [user, isAdmin]);
 
-  useEffect(() => {
-    filterApplications();
-  }, [applications, searchTerm, statusFilter]);
-
   const fetchApplications = async () => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('applications')
@@ -99,38 +70,18 @@ const AdminPage: React.FC = () => {
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to fetch applications');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const filterApplications = () => {
-    let filtered = applications;
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(app => 
-        app.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.industry.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(app => app.status === statusFilter);
-    }
-
-    setFilteredApplications(filtered);
-  };
-
-  const updateApplicationStatus = async (applicationId: string, newStatus: string, notes?: string) => {
+  const updateApplication = async (applicationId: string, updates: Partial<Application>) => {
     setIsUpdating(true);
     try {
       const { error } = await supabase
         .from('applications')
-        .update({ 
-          status: newStatus,
-          notes: notes || null,
+        .update({
+          ...updates,
           updated_at: new Date().toISOString()
         })
         .eq('id', applicationId);
@@ -139,12 +90,119 @@ const AdminPage: React.FC = () => {
 
       toast.success('Application updated successfully');
       await fetchApplications();
-      setShowApplicationModal(false);
     } catch (error) {
       console.error('Error updating application:', error);
       toast.error('Failed to update application');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const deleteApplication = async (applicationId: string) => {
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .delete()
+        .eq('id', applicationId);
+
+      if (error) throw error;
+
+      toast.success('Application deleted successfully');
+      await fetchApplications();
+      setShowDeleteModal(false);
+      setApplicationToDelete(null);
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      toast.error('Failed to delete application');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Event handlers
+  const handleViewApplication = (application: Application) => {
+    setSelectedApplication(application);
+    setShowApplicationModal(true);
+  };
+
+  const handleEditApplication = (application: Application) => {
+    setSelectedApplication(application);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteApplication = (application: Application) => {
+    setApplicationToDelete(application);
+    setShowDeleteModal(true);
+  };
+
+  const handleSaveApplication = async (updates: Partial<Application>) => {
+    if (selectedApplication) {
+      await updateApplication(selectedApplication.id, updates);
+      setShowEditModal(false);
+      setSelectedApplication(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (applicationToDelete) {
+      await deleteApplication(applicationToDelete.id);
+    }
+  };
+
+  // Get breadcrumbs based on active tab
+  const getBreadcrumbs = (): BreadcrumbItem[] => {
+    switch (activeTab) {
+      case 'dashboard':
+        return [{ label: 'Dashboard', current: true }];
+      case 'applications':
+        return [
+          { label: 'Dashboard', href: '#' },
+          { label: 'Applications', current: true }
+        ];
+      case 'users':
+        return [
+          { label: 'Dashboard', href: '#' },
+          { label: 'Users', current: true }
+        ];
+      case 'settings':
+        return [
+          { label: 'Dashboard', href: '#' },
+          { label: 'Settings', current: true }
+        ];
+      default:
+        return [{ label: 'Dashboard', current: true }];
+    }
+  };
+
+  // Get page title and subtitle
+  const getPageInfo = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return {
+          title: 'Dashboard',
+          subtitle: 'Overview of your business applications'
+        };
+      case 'applications':
+        return {
+          title: 'Applications',
+          subtitle: 'Manage all business applications'
+        };
+      case 'users':
+        return {
+          title: 'Users',
+          subtitle: 'Manage admin users and permissions'
+        };
+      case 'settings':
+        return {
+          title: 'Settings',
+          subtitle: 'Configure system settings'
+        };
+      default:
+        return {
+          title: 'Dashboard',
+          subtitle: 'Overview of your business applications'
+        };
     }
   };
 
@@ -159,23 +217,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'new': return DocumentTextIcon;
-      case 'in_progress': return ClockIcon;
-      case 'contacted': return ChatBubbleLeftIcon;
-      case 'approved': return CheckCircleIcon;
-      case 'rejected': return XCircleIcon;
-      default: return DocumentTextIcon;
-    }
-  };
-
-  const sidebarItems = [
-    { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
-    { id: 'applications', name: 'Applications', icon: DocumentTextIcon },
-    { id: 'users', name: 'Users', icon: UserGroupIcon },
-    { id: 'settings', name: 'Settings', icon: CogIcon }
-  ];
+  const pageInfo = getPageInfo();
 
   if (loading) {
     return (
@@ -190,475 +232,151 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm h-screen fixed left-0 top-0">
-          <div className="p-6">
-            <h1 className="text-xl font-bold text-gray-900">GrowthPro Admin</h1>
-          </div>
-          
-          <nav className="mt-6">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-6 py-3 text-left transition-colors duration-200 ${
-                  activeTab === item.id
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <AdminSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onSignOut={signOut}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <AdminHeader
+          title={pageInfo.title}
+          subtitle={pageInfo.subtitle}
+          breadcrumbs={getBreadcrumbs()}
+          isCollapsed={isCollapsed}
+          user={{
+            name: 'Admin User',
+            email: 'admin@growthpro.com'
+          }}
+        />
+
+        {/* Content */}
+        <main className={`flex-1 p-6 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
               >
-                <item.icon className="h-5 w-5 mr-3" />
-                {item.name}
-              </button>
-            ))}
-          </nav>
+                {/* Stats */}
+                <DashboardStats stats={stats} isLoading={isLoading} />
 
-          <div className="absolute bottom-0 w-full p-6">
-            <button
-              onClick={signOut}
-              className="w-full flex items-center text-gray-700 hover:text-red-600 transition-colors duration-200"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5 mr-3" />
-              Sign Out
-            </button>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 ml-64">
-          <div className="p-8">
-            <AnimatePresence mode="wait">
-              {activeTab === 'dashboard' && (
-                <motion.div
-                  key="dashboard"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-600 mt-2">Overview of your business applications</p>
+                {/* Recent Applications */}
+                <div className="bg-white rounded-lg shadow-sm">
+                  <div className="p-6 border-b border-gray-200">
+                    <h2 className="text-xl font-semibold text-gray-900">Recent Applications</h2>
                   </div>
+                  <ApplicationList
+                    applications={applications.slice(0, 5)}
+                    onView={handleViewApplication}
+                    onEdit={handleEditApplication}
+                    onDelete={handleDeleteApplication}
+                    isLoading={isLoading}
+                  />
+                </div>
+              </motion.div>
+            )}
 
-                  {/* Stats Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Applications</p>
-                          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                        </div>
-                        <DocumentDuplicateIcon className="h-8 w-8 text-gray-400" />
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">New</p>
-                          <p className="text-2xl font-bold text-blue-600">{stats.new}</p>
-                        </div>
-                        <DocumentTextIcon className="h-8 w-8 text-blue-400" />
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">In Progress</p>
-                          <p className="text-2xl font-bold text-yellow-600">{stats.in_progress}</p>
-                        </div>
-                        <ClockIcon className="h-8 w-8 text-yellow-400" />
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Contacted</p>
-                          <p className="text-2xl font-bold text-purple-600">{stats.contacted}</p>
-                        </div>
-                        <ChatBubbleLeftIcon className="h-8 w-8 text-purple-400" />
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Approved</p>
-                          <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-                        </div>
-                        <CheckCircleIcon className="h-8 w-8 text-green-400" />
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Rejected</p>
-                          <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-                        </div>
-                        <XCircleIcon className="h-8 w-8 text-red-400" />
-                      </div>
-                    </div>
-                  </div>
+            {activeTab === 'applications' && (
+              <motion.div
+                key="applications"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ApplicationList
+                  applications={applications}
+                  onView={handleViewApplication}
+                  onEdit={handleEditApplication}
+                  onDelete={handleDeleteApplication}
+                  isLoading={isLoading}
+                />
+              </motion.div>
+            )}
 
-                  {/* Recent Applications */}
-                  <div className="bg-white rounded-lg shadow-sm">
-                    <div className="p-6 border-b border-gray-200">
-                      <h2 className="text-xl font-semibold text-gray-900">Recent Applications</h2>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Business
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Contact
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Status
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {applications.slice(0, 5).map((app) => (
-                            <tr key={app.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">{app.business_name}</div>
-                                  <div className="text-sm text-gray-500">{app.industry}</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm text-gray-900">{app.full_name}</div>
-                                  <div className="text-sm text-gray-500">{app.email}</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(app.status)}`}>
-                                  {app.status.replace('_', ' ')}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(app.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                  onClick={() => {
-                                    setSelectedApplication(app);
-                                    setShowApplicationModal(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  View
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+            {activeTab === 'users' && (
+              <motion.div
+                key="users"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-12"
+              >
+                <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
+                <p className="text-gray-600 mt-2">User management features coming soon</p>
+              </motion.div>
+            )}
 
-              {activeTab === 'applications' && (
-                <motion.div
-                  key="applications"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Applications</h1>
-                    <p className="text-gray-600 mt-2">Manage all business applications</p>
-                  </div>
-
-                  {/* Filters */}
-                  <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Search
-                        </label>
-                        <div className="relative">
-                          <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                          <input
-                            type="text"
-                            placeholder="Search by business name, contact, or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Status Filter
-                        </label>
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="all">All Status</option>
-                          <option value="new">New</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="contacted">Contacted</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Applications Table */}
-                  <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Business
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Contact
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Revenue
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Status
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {filteredApplications.map((app) => (
-                            <tr key={app.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">{app.business_name}</div>
-                                  <div className="text-sm text-gray-500">{app.industry}</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                  <div className="text-sm text-gray-900">{app.full_name}</div>
-                                  <div className="text-sm text-gray-500">{app.email}</div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {app.monthly_revenue}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(app.status)}`}>
-                                  {app.status.replace('_', ' ')}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(app.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button
-                                  onClick={() => {
-                                    setSelectedApplication(app);
-                                    setShowApplicationModal(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-900 mr-4"
-                                >
-                                  <EyeIcon className="h-4 w-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === 'users' && (
-                <motion.div
-                  key="users"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-center py-12"
-                >
-                  <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
-                  <p className="text-gray-600 mt-2">User management features coming soon</p>
-                </motion.div>
-              )}
-
-              {activeTab === 'settings' && (
-                <motion.div
-                  key="settings"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-center py-12"
-                >
-                  <CogIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
-                  <p className="text-gray-600 mt-2">Settings panel coming soon</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+            {activeTab === 'settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="text-center py-12"
+              >
+                <CogIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+                <p className="text-gray-600 mt-2">Settings panel coming soon</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
       </div>
 
-      {/* Application Details Modal */}
-      {showApplicationModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-900">Application Details</h2>
-                <button
-                  onClick={() => setShowApplicationModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircleIcon className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Business Name</label>
-                      <p className="text-gray-900">{selectedApplication.business_name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Website URL</label>
-                      <p className="text-gray-900">
-                        <a href={selectedApplication.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                          {selectedApplication.website_url}
-                        </a>
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Industry</label>
-                      <p className="text-gray-900">{selectedApplication.industry}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Monthly Revenue</label>
-                      <p className="text-gray-900">{selectedApplication.monthly_revenue}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Business Description</label>
-                      <p className="text-gray-900">{selectedApplication.business_description}</p>
-                    </div>
-                  </div>
-                </div>
+      {/* Modals */}
+      {selectedApplication && (
+        <>
+          <ApplicationDetails
+            application={selectedApplication}
+            isOpen={showApplicationModal}
+            onClose={() => {
+              setShowApplicationModal(false);
+              setSelectedApplication(null);
+            }}
+            onEdit={handleEditApplication}
+          />
 
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Full Name</label>
-                      <p className="text-gray-900">{selectedApplication.full_name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Email</label>
-                      <p className="text-gray-900">
-                        <a href={`mailto:${selectedApplication.email}`} className="text-blue-600 hover:underline">
-                          {selectedApplication.email}
-                        </a>
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Phone</label>
-                      <p className="text-gray-900">
-                        <a href={`tel:${selectedApplication.phone}`} className="text-blue-600 hover:underline">
-                          {selectedApplication.phone}
-                        </a>
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Address</label>
-                      <p className="text-gray-900">{selectedApplication.address}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Preferred Contact</label>
-                      <p className="text-gray-900">{selectedApplication.preferred_contact}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Status & Notes</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Current Status</label>
-                    <div className="mt-1">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedApplication.status)}`}>
-                        {selectedApplication.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Update Status</label>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {['new', 'in_progress', 'contacted', 'approved', 'rejected'].map(status => (
-                        <button
-                          key={status}
-                          onClick={() => updateApplicationStatus(selectedApplication.id, status)}
-                          disabled={isUpdating || selectedApplication.status === status}
-                          className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
-                            selectedApplication.status === status
-                              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          }`}
-                        >
-                          {status.replace('_', ' ')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {selectedApplication.notes && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">Notes</label>
-                      <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedApplication.notes}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Created</label>
-                    <p className="text-gray-900">{new Date(selectedApplication.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          <ApplicationEditForm
+            application={selectedApplication}
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedApplication(null);
+            }}
+            onSave={handleSaveApplication}
+            isLoading={isUpdating}
+          />
+        </>
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setApplicationToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Application"
+        message={`Are you sure you want to delete the application from "${applicationToDelete?.business_name}"? This action cannot be undone.`}
+        confirmText="Delete Application"
+        variant="danger"
+        isLoading={isUpdating}
+      />
     </div>
   );
 };
