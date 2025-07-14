@@ -7,6 +7,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import SubscribePage from './pages/SubscribePage';
 import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import ClientDashboardPage from './pages/ClientDashboardPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           {/* Admin routes outside of main layout */}
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/client_area" element={<ClientDashboardPage />} />
         </Routes>
       </Router>
     </AuthProvider>
