@@ -273,7 +273,7 @@ const SubscribePage: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: packageIndex * 0.2, duration: 0.6 }}
-              className="bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+              className="bg-white rounded-1xl shadow-2xl border border-slate-100 overflow-hidden"
             >
               {/* Package Header */}
               <div className={`bg-gradient-to-r ${pkg.color} p-8 text-white`}>
