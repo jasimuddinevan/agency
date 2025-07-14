@@ -199,7 +199,7 @@ const OnboardingPage: React.FC = () => {
         </motion.div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-1x2 shadow-1xl border border-slate-100/50 overflow-hidden">
+        <div className="bg-white rounded-2x2 shadow-1xl border border-slate-100/50 overflow-hidden">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div
