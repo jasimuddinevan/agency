@@ -114,7 +114,7 @@ const Footer: React.FC = () => {
             <p className="text-gray-400 text-sm">
               Developed by{' '}
               <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors duration-200">
-                Your Developer
+                Jasim Uddin
               </a>
             </p>
           </div>
