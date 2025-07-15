@@ -229,7 +229,7 @@ const ProcessSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 1, duration: 0.6 }}
-          className="mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 text-white text-center"
+          className="mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white text-center"
         >
           <h3 className="text-2xl font-bold mb-4">Fast-Track Your Success</h3>
           <p className="text-lg mb-6 text-blue-100">
