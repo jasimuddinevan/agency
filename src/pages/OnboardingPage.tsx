@@ -71,6 +71,49 @@ const OnboardingPage: React.FC = () => {
     mode: 'onChange'
   });
 
+  // Handle Complete Now button - go to subscribe page with auto-login
+  const handleCompleteNow = async () => {
+    if (submittedApplicationData) {
+      try {
+        // Create a temporary account for the user to access client area later
+        // In a real app, you might want to send them an email to set up their account
+        // For now, we'll just navigate to subscribe page
+        navigate('/subscribe');
+      } catch (error) {
+        console.error('Error during complete now:', error);
+        navigate('/subscribe');
+      }
+    } else {
+      navigate('/subscribe');
+    }
+  };
+
+  // Handle Skip for now - go to client area with auto-login
+  const handleSkipForNow = async () => {
+    if (submittedApplicationData) {
+      try {
+        // In a real application, you would:
+        // 1. Create a user account with the submitted email
+        // 2. Send them login credentials via email
+        // 3. Auto-login them here
+        
+        // For demo purposes, we'll simulate auto-login
+        toast.success('Redirecting to your client dashboard...');
+        
+        // Simulate a brief delay for the login process
+        setTimeout(() => {
+          navigate('/client_area');
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Error during skip for now:', error);
+        toast.error('Unable to access client area. Please contact support.');
+      }
+    } else {
+      navigate('/client_area');
+    }
+  };
+
   const handleStep1Submit = (data: any) => {
     setFormData(prev => ({ ...prev, ...data }));
     setCurrentStep(2);
