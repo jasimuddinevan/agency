@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   CheckCircleIcon, 
   ArrowRightIcon, 
@@ -42,6 +44,9 @@ const OnboardingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedApplicationData, setSubmittedApplicationData] = useState<any>(null);
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const industries = [
     'E-commerce', 'Fashion', 'Beauty & Cosmetics', 'Health & Wellness',
@@ -94,6 +99,9 @@ const OnboardingPage: React.FC = () => {
 
       if (error) throw error;
 
+      // Store the submitted data for potential auto-login
+      setSubmittedApplicationData(fullData);
+      
       toast.success('Application submitted successfully!');
       setCurrentStep(3);
     } catch (error) {
@@ -515,35 +523,36 @@ const OnboardingPage: React.FC = () => {
                   <CheckCircleIcon className="h-12 w-12 text-white" />
                 </motion.div>
 
-                <h2 className="text-4xl font-bold text-slate-900 mb-4">Application Submitted Successfully!</h2>
+                <h2 className="text-4xl font-bold text-slate-900 mb-4">Thank you, we've got your application.</h2>
                 <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-                  Thank you for your interest in GrowthPro. We've received your application and our team will review it shortly.
+                  Your application has been successfully submitted and our team will review it shortly.
                 </p>
                 
                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 border border-blue-200">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6">What happens next?</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">1</span>
-                      </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Review & Analysis</h4>
-                      <p className="text-slate-600 text-sm">Our team reviews your application within 24 hours</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">2</span>
-                      </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Strategy Call</h4>
-                      <p className="text-slate-600 text-sm">We contact you to discuss your personalized growth strategy</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">3</span>
-                      </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Get Started</h4>
-                      <p className="text-slate-600 text-sm">Begin your journey to business growth and success</p>
-                    </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">You are just 1 step away...</h3>
+                  <p className="text-lg text-slate-600 mb-8">
+                    Complete your journey by choosing one of our growth packages or explore your client dashboard.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleCompleteNow}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl flex items-center justify-center"
+                    >
+                      <SparklesIcon className="h-5 w-5 mr-2" />
+                      Complete Now
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSkipForNow}
+                      className="flex-1 border-2 border-slate-300 text-slate-700 px-6 py-4 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-300 font-semibold text-lg"
+                    >
+                      Skip for now!
+                    </motion.button>
                   </div>
                 </div>
 
