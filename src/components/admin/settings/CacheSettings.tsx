@@ -649,6 +649,5 @@ const CacheSettings: React.FC = () => {
   );
 };
 
-export default CacheSettings;
 
 export default CacheSettings
