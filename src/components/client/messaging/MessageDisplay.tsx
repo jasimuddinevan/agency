@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  ReplyIcon,
   ShieldCheckIcon,
   UserCircleIcon,
   ClockIcon,
   EnvelopeIcon
 } from '@heroicons/react/24/outline';
+import { ReplyIcon } from '@heroicons/react/24/solid';
 import { Message } from '../../../types/messaging';
 import { useClientAuth } from '../../../contexts/ClientAuthContext';
 

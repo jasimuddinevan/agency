@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  PaperAirplaneIcon,
   XMarkIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { useMessaging } from '../../../hooks/useMessaging';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
