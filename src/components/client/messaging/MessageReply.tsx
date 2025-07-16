@@ -47,22 +47,37 @@ const MessageReply: React.FC<MessageReplyProps> = ({
   const handleSend = async () => {
     if (!validateForm()) return;
 
+    let adminId = null;
+
     try {
       // Get admin user to send message to
       const { data: adminUsers, error } = await supabase
         .from('admin_users')
         .select('id')
+        .eq('role', 'super_admin')
         .limit(1);
 
       if (error) throw error;
 
       if (!adminUsers || adminUsers.length === 0) {
-        toast.error('No admin users found to send message to');
-        return;
+        // Fallback to any admin user
+        const { data: anyAdmin, error: anyAdminError } = await supabase
+          .from('admin_users')
+          .select('id')
+          .limit(1);
+          
+        if (anyAdminError || !anyAdmin || anyAdmin.length === 0) {
+          toast.error('No admin users found to send message to');
+          return;
+        }
+        
+        adminId = anyAdmin[0].id;
+      } else {
+        adminId = adminUsers[0].id;
       }
 
       await sendMessage({
-        receiver_id: adminUsers[0].id,
+        receiver_id: adminId,
         content,
         subject,
         message_type: 'direct'

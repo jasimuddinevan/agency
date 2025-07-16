@@ -60,21 +60,20 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Only fetch clients who have client profiles (valid UUIDs)
-      const { data: clientProfiles, error: clientError } = await supabase
-        .from('client_profiles')
-        .select('id, full_name, email, company')
-        .eq('account_status', 'active')
+      // Fetch all applications to get potential recipients
+      const { data: applications, error: appError } = await supabase
+        .from('applications')
+        .select('id, full_name, email, business_name')
         .order('full_name');
 
-      if (clientError) throw clientError;
+      if (appError) throw appError;
 
-      // Convert client profiles to ClientOption format
-      const clients: ClientOption[] = clientProfiles?.map(client => ({
+      // Convert applications to ClientOption format
+      const clients: ClientOption[] = applications?.map(client => ({
           id: client.id,
           full_name: client.full_name,
           email: client.email,
-          company: client.company
+          company: client.business_name
         })) || [];
 
       setAvailableClients(clients);
@@ -108,6 +107,14 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const handleSend = async () => {
     if (!validateForm()) return;
 
+    // For testing purposes, use a direct message to the first recipient
+    const recipientId = selectedClients[0]?.id;
+    
+    if (!recipientId) {
+      toast.error('No valid recipient selected');
+      return;
+    }
+
     try {
       if (messageType === 'broadcast') {
         await sendMessage({
@@ -127,7 +134,6 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
           });
         }
       }
-
       toast.success(`Message sent to ${selectedClients.length} recipient${selectedClients.length > 1 ? 's' : ''}!`);
       onMessageSent();
     } catch (error) {
