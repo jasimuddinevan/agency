@@ -9,7 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useMessaging } from '../../../hooks/useMessaging';
 import MessageDisplay from './MessageDisplay';
-import MessageReply from './MessageReply';
+import ClientMessageComposer from './ClientMessageComposer';
 import NotificationBadge from './NotificationBadge';
 
 const ClientMessageCenter: React.FC = () => {
@@ -213,7 +213,7 @@ const ClientMessageCenter: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 className="h-full"
               >
-                <MessageReply
+                <ClientMessageComposer
                   onMessageSent={handleMessageSent}
                   onCancel={() => {
                     setShowComposer(false);
