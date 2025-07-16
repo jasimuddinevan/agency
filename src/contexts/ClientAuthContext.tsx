@@ -30,17 +30,39 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchClientProfile(session.user.id);
-      } else {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+          setUser(null);
+          setClientProfile(null);
+          setLoading(false);
+          return;
+        }
+
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchClientProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setUser(null);
+        setClientProfile(null);
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, !!session?.user);
+      
       setUser(session?.user ?? null);
       
       if (session?.user) {
@@ -61,6 +83,8 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const fetchClientProfile = async (userId: string) => {
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
         .from('client_profiles')
         .select('*')
@@ -69,11 +93,13 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       if (error) {
         console.error('Error fetching client profile:', error);
+        console.error('Error fetching client profile:', error);
         setClientProfile(null);
       } else {
         setClientProfile(data);
       }
     } catch (error) {
+      console.error('Error fetching client profile:', error);
       console.error('Error fetching client profile:', error);
       setClientProfile(null);
     } finally {
@@ -102,8 +128,14 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setClientProfile(null);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setClientProfile(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
   };
 
   const updateProfile = async (updates: Partial<ClientProfile>) => {

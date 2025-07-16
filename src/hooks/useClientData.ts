@@ -25,13 +25,18 @@ export const useClientData = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && clientProfile) {
+    // Only fetch data if user is authenticated and has a profile
+    if (user && clientProfile && !loading) {
       fetchAllData();
     }
-  }, [user, clientProfile]);
+  }, [user, clientProfile, loading]);
 
   const fetchAllData = async () => {
-    if (!user) return;
+    // Double-check authentication before fetching data
+    if (!user || !clientProfile) {
+      console.warn('Attempted to fetch data without proper authentication');
+      return;
+    }
     
     setLoading(true);
     setError(null);

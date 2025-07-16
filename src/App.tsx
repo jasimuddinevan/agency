@@ -28,6 +28,8 @@ function App() {
             {/* Client routes outside of main layout */}
             <Route path="/client_area/login" element={<ClientLoginPage />} />
             <Route path="/client_area" element={<ClientDashboardPage />} />
+            {/* Redirect /client_area/* to login if not authenticated */}
+            <Route path="/client_area/*" element={<Navigate to="/client_area/login" replace />} />
           </Routes>
         </Router>
       </ClientAuthProvider>

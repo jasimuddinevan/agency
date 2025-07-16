@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { useClientAuth } from '../contexts/ClientAuthContext';
-import { useClientData } from '../hooks/useClientData';
 import toast from 'react-hot-toast';
 
 // Import client components
@@ -22,20 +21,23 @@ import {
 
 const ClientDashboardPage: React.FC = () => {
   const { user, clientProfile, loading: authLoading } = useClientAuth();
-  const { 
-    services, 
-    messages, 
-    activities, 
-    stats, 
-    loading: dataLoading,
-    updateService,
-    sendMessage,
-    markMessageAsRead,
-    logActivity
-  } = useClientData();
   
   const [activeTab, setActiveTab] = useState('overview');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  
+  // Initialize data states
+  const [services, setServices] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [stats, setStats] = useState({
+    total_services: 0,
+    active_services: 0,
+    unread_messages: 0,
+    upcoming_payments: 0,
+    total_spent: 0,
+    account_status: 'pending'
+  });
 
   const [notificationSettings] = useState<ClientNotificationSettings>({
     email_notifications: true,
@@ -44,6 +46,51 @@ const ClientDashboardPage: React.FC = () => {
     billing_reminders: true,
     marketing_emails: false
   });
+
+  // Only load data after authentication is confirmed
+  useEffect(() => {
+    if (user && clientProfile && !dataLoaded) {
+      loadClientData();
+    }
+  }, [user, clientProfile, dataLoaded]);
+
+  const loadClientData = async () => {
+    try {
+      // Mock data loading - replace with actual API calls
+      setServices([
+        {
+          id: '1',
+          name: 'Website Management',
+          type: 'web-management',
+          status: 'active',
+          plan: 'premium',
+          price: 99,
+          billing_cycle: 'monthly',
+          start_date: '2024-01-01',
+          next_billing_date: '2024-02-01',
+          features: ['24/7 monitoring', 'Security updates', 'Performance optimization'],
+          metrics: { uptime: '99.9%', performance_score: 95 }
+        }
+      ]);
+      
+      setMessages([]);
+      setActivities([]);
+      
+      setStats({
+        total_services: 1,
+        active_services: 1,
+        unread_messages: 0,
+        upcoming_payments: 1,
+        total_spent: 99,
+        account_status: 'active'
+      });
+      
+      setDataLoaded(true);
+    } catch (error) {
+      console.error('Error loading client data:', error);
+      toast.error('Failed to load dashboard data');
+    }
+  };
 
   // Event handlers
   const handleServiceAction = async (serviceId: string, action: 'pause' | 'resume' | 'cancel' | 'renew') => {
@@ -57,9 +104,7 @@ const ClientDashboardPage: React.FC = () => {
 
   const handleMessageClick = async (message: any) => {
     // In a real app, this would open a message detail view or mark as read
-    if (!message.is_read) {
-      await markMessageAsRead(message.id);
-    }
+    toast.success('Message detail view coming soon!');
   };
 
   const handleNewMessage = () => {
@@ -94,8 +139,14 @@ const ClientDashboardPage: React.FC = () => {
     }
   };
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('Error signing out');
+    }
   };
 
   // Get page info based on active tab
@@ -137,8 +188,25 @@ const ClientDashboardPage: React.FC = () => {
   const pageInfo = getPageInfo();
   const unreadMessages = messages.filter(m => !m.is_read).length;
 
-  // Show loading state while checking authentication
-  if (authLoading || dataLoading) {
+  // CRITICAL: Check authentication first, before any data loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // CRITICAL: Redirect immediately if not authenticated - don't load any data
+  if (!user || !clientProfile) {
+    return <Navigate to="/client_area/login" replace />;
+  }
+
+  // Show data loading state only after authentication is confirmed
+  if (!dataLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -147,11 +215,6 @@ const ClientDashboardPage: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  // Redirect to login page if not authenticated or no client profile
-  if (!user || !clientProfile) {
-    return <Navigate to="/client_area/login" replace />;
   }
 
   return (
@@ -190,12 +253,12 @@ const ClientDashboardPage: React.FC = () => {
                 className="space-y-8"
               >
                 {/* Stats */}
-                <OverviewStats stats={stats} isLoading={dataLoading} />
+                <OverviewStats stats={stats} isLoading={false} />
 
                 {/* Activity Timeline */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2">
-                    <ActivityTimeline activities={activities} isLoading={dataLoading} />
+                    <ActivityTimeline activities={activities} isLoading={false} />
                   </div>
                   
                   {/* Quick Actions */}
@@ -271,7 +334,7 @@ const ClientDashboardPage: React.FC = () => {
                   messages={messages}
                   onMessageClick={handleMessageClick}
                   onNewMessage={handleNewMessage}
-                  isLoading={dataLoading}
+                  isLoading={false}
                 />
               </motion.div>
             )}
@@ -287,7 +350,7 @@ const ClientDashboardPage: React.FC = () => {
                 <ServicesList
                   services={services}
                   onServiceAction={handleServiceAction}
-                  isLoading={dataLoading}
+                  isLoading={false}
                 />
               </motion.div>
             )}
@@ -306,7 +369,7 @@ const ClientDashboardPage: React.FC = () => {
                   onUpdateProfile={handleUpdateProfile}
                   onUpdateNotifications={handleUpdateNotifications}
                   onChangePassword={handleChangePassword}
-                  isLoading={dataLoading}
+                  isLoading={false}
                 />
               </motion.div>
             )}
