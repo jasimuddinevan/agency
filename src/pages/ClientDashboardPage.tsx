@@ -95,7 +95,7 @@ const ClientDashboardPage: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    // This will be handled by the auth context
+    signOut();
   };
 
   // Get page info based on active tab
@@ -137,6 +137,7 @@ const ClientDashboardPage: React.FC = () => {
   const pageInfo = getPageInfo();
   const unreadMessages = messages.filter(m => !m.is_read).length;
 
+  // Show loading state while checking authentication
   if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -148,7 +149,7 @@ const ClientDashboardPage: React.FC = () => {
     );
   }
 
-  // Redirect to login if not authenticated or no profile
+  // Redirect to login page if not authenticated or no client profile
   if (!user || !clientProfile) {
     return <Navigate to="/client_area/login" replace />;
   }
