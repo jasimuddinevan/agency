@@ -4,9 +4,9 @@ import {
   ShieldCheckIcon,
   UserCircleIcon,
   ClockIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  ArrowUturnLeftIcon
 } from '@heroicons/react/24/outline';
-import { ReplyIcon } from '@heroicons/react/24/solid';
 import { Message } from '../../../types/messaging';
 import { useClientAuth } from '../../../contexts/ClientAuthContext';
 
@@ -76,7 +76,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ message, onReply }) => 
               onClick={onReply}
               className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
             >
-              <ReplyIcon className="h-4 w-4 mr-2" />
+              <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
               Reply
             </button>
           )}
@@ -135,7 +135,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ message, onReply }) => 
                   onClick={onReply}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
                 >
-                  <ReplyIcon className="h-4 w-4 mr-2" />
+                  <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
                   Reply to Message
                 </button>
                 <button className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">

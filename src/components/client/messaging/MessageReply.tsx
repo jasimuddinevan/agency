@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import {
   XMarkIcon,
   ExclamationTriangleIcon
-} from '@heroicons/react/24/outline';
-import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { useMessaging } from '../../../hooks/useMessaging';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
