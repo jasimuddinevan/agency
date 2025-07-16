@@ -10,7 +10,7 @@ import ClientHeader from '../components/client/layout/ClientHeader';
 import OverviewStats from '../components/client/overview/OverviewStats';
 import ActivityTimeline from '../components/client/overview/ActivityTimeline';
 import ServicesList from '../components/client/services/ServicesList';
-import MessagesList from '../components/client/messages/MessagesList';
+import ClientMessageCenter from '../components/client/messaging/ClientMessageCenter';
 import ProfileSettings from '../components/client/profile/ProfileSettings';
 
 // Import types
@@ -329,13 +329,9 @@ const ClientDashboardPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
+                className="h-[calc(100vh-200px)]"
               >
-                <MessagesList
-                  messages={messages}
-                  onMessageClick={handleMessageClick}
-                  onNewMessage={handleNewMessage}
-                  isLoading={false}
-                />
+                <ClientMessageCenter />
               </motion.div>
             )}
 

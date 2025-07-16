@@ -15,6 +15,7 @@ import ApplicationList from '../components/admin/applications/ApplicationList';
 import ApplicationDetails from '../components/admin/applications/ApplicationDetails';
 import ApplicationEditForm from '../components/admin/applications/ApplicationEditForm';
 import ConfirmationModal from '../components/admin/common/ConfirmationModal';
+import MessageCenter from '../components/admin/messaging/MessageCenter';
 
 // Import types
 import { Application, DashboardStats as StatsType, BreadcrumbItem } from '../types/admin';
@@ -189,6 +190,11 @@ const AdminPage: React.FC = () => {
           title: 'Applications',
           subtitle: 'Manage all business applications'
         };
+      case 'messages':
+        return {
+          title: 'Messages',
+          subtitle: 'Communicate with clients and manage conversations'
+        };
       case 'marketing':
         return {
           title: 'Marketing',
@@ -308,6 +314,19 @@ const AdminPage: React.FC = () => {
                   onDelete={handleDeleteApplication}
                   isLoading={isLoading}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'messages' && (
+              <motion.div
+                key="messages"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="h-[calc(100vh-200px)]"
+              >
+                <MessageCenter />
               </motion.div>
             )}
 
