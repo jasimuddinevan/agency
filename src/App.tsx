@@ -1,30 +1,36 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ClientAuthProvider } from './contexts/ClientAuthContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import OnboardingPage from './pages/OnboardingPage';
 import SubscribePage from './pages/SubscribePage';
 import AdminPage from './pages/AdminPage';
 import AdminLoginPage from './pages/AdminLoginPage';
+import ClientLoginPage from './pages/ClientLoginPage';
 import ClientDashboardPage from './pages/ClientDashboardPage';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="onboarding" element={<OnboardingPage />} />
-            <Route path="subscribe" element={<SubscribePage />} />
-          </Route>
-          {/* Admin routes outside of main layout */}
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/client_area" element={<ClientDashboardPage />} />
-        </Routes>
-      </Router>
+      <ClientAuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="onboarding" element={<OnboardingPage />} />
+              <Route path="subscribe" element={<SubscribePage />} />
+            </Route>
+            {/* Admin routes outside of main layout */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            {/* Client routes outside of main layout */}
+            <Route path="/client_area/login" element={<ClientLoginPage />} />
+            <Route path="/client_area" element={<ClientDashboardPage />} />
+          </Routes>
+        </Router>
+      </ClientAuthProvider>
     </AuthProvider>
   );
 }

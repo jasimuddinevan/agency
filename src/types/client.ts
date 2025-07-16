@@ -8,6 +8,24 @@ export interface ClientUser {
   last_login?: string;
 }
 
+export interface ClientProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  phone?: string;
+  company?: string;
+  website?: string;
+  address?: string;
+  avatar_url?: string;
+  timezone: string;
+  language: string;
+  account_status: 'active' | 'suspended' | 'pending';
+  total_spent: number;
+  created_at: string;
+  updated_at: string;
+  last_login?: string;
+}
+
 export interface ClientApplication {
   id: string;
   business_name: string;

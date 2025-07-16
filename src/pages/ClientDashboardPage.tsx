@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useClientAuth } from '../contexts/ClientAuthContext';
+import { useClientData } from '../hooks/useClientData';
 import toast from 'react-hot-toast';
 
 // Import client components
@@ -15,185 +16,26 @@ import ProfileSettings from '../components/client/profile/ProfileSettings';
 
 // Import types
 import {
-  ClientUser,
-  ClientStats,
-  ClientActivity,
-  ClientService,
-  ClientMessage,
   ClientProfile,
   ClientNotificationSettings
 } from '../types/client';
 
 const ClientDashboardPage: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, clientProfile, loading: authLoading } = useClientAuth();
+  const { 
+    services, 
+    messages, 
+    activities, 
+    stats, 
+    loading: dataLoading,
+    updateService,
+    sendMessage,
+    markMessageAsRead,
+    logActivity
+  } = useClientData();
+  
   const [activeTab, setActiveTab] = useState('overview');
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Mock data - In a real app, this would come from API calls
-  const [clientUser] = useState<ClientUser>({
-    id: '1',
-    email: 'client@example.com',
-    full_name: 'John Doe',
-    phone: '+1 (555) 123-4567',
-    created_at: '2024-01-01T00:00:00Z',
-    last_login: '2024-01-15T10:30:00Z'
-  });
-
-  const [stats] = useState<ClientStats>({
-    total_services: 3,
-    active_services: 2,
-    unread_messages: 2,
-    upcoming_payments: 1,
-    total_spent: 2450,
-    account_status: 'active'
-  });
-
-  const [activities] = useState<ClientActivity[]>([
-    {
-      id: '1',
-      type: 'service_update',
-      title: 'Website Security Update',
-      description: 'Your website security has been updated with the latest patches.',
-      created_at: '2024-01-15T09:00:00Z'
-    },
-    {
-      id: '2',
-      type: 'message_received',
-      title: 'New Message from Support',
-      description: 'You have received a new message regarding your Facebook Ads campaign.',
-      created_at: '2024-01-14T16:30:00Z'
-    },
-    {
-      id: '3',
-      type: 'payment_processed',
-      title: 'Payment Processed',
-      description: 'Your monthly payment of $299 has been successfully processed.',
-      created_at: '2024-01-13T08:15:00Z'
-    },
-    {
-      id: '4',
-      type: 'report_generated',
-      title: 'Monthly Report Available',
-      description: 'Your December performance report is now available for download.',
-      created_at: '2024-01-12T12:00:00Z'
-    }
-  ]);
-
-  const [services] = useState<ClientService[]>([
-    {
-      id: '1',
-      name: 'Website Management & Security',
-      type: 'web-management',
-      status: 'active',
-      plan: 'premium',
-      price: 99,
-      billing_cycle: 'monthly',
-      start_date: '2023-12-01T00:00:00Z',
-      next_billing_date: '2024-02-01T00:00:00Z',
-      features: [
-        '24/7 website monitoring',
-        'Daily backups',
-        'Advanced security protection',
-        'Performance optimization',
-        'Priority support',
-        'Monthly reports'
-      ],
-      metrics: {
-        uptime: '99.9%',
-        performance_score: 95,
-        conversions: undefined,
-        revenue_generated: undefined
-      }
-    },
-    {
-      id: '2',
-      name: 'Facebook Ads Management',
-      type: 'facebook-ads',
-      status: 'active',
-      plan: 'premium',
-      price: 399,
-      billing_cycle: 'monthly',
-      start_date: '2023-11-15T00:00:00Z',
-      next_billing_date: '2024-02-15T00:00:00Z',
-      features: [
-        'Advanced audience targeting',
-        'Custom ad creatives',
-        'A/B testing',
-        '24/7 campaign monitoring',
-        'Weekly optimization',
-        'Detailed analytics'
-      ],
-      metrics: {
-        uptime: undefined,
-        performance_score: undefined,
-        conversions: 156,
-        revenue_generated: 12500
-      }
-    },
-    {
-      id: '3',
-      name: 'Shopify Store Optimization',
-      type: 'shopify-growth',
-      status: 'paused',
-      plan: 'basic',
-      price: 149,
-      billing_cycle: 'monthly',
-      start_date: '2023-10-01T00:00:00Z',
-      next_billing_date: '2024-03-01T00:00:00Z',
-      features: [
-        'Store setup & optimization',
-        'Product listing optimization',
-        'Basic inventory management',
-        'Monthly performance review',
-        'Email support'
-      ]
-    }
-  ]);
-
-  const [messages] = useState<ClientMessage[]>([
-    {
-      id: '1',
-      sender_id: 'admin-1',
-      sender_name: 'Sarah Johnson',
-      sender_type: 'admin',
-      subject: 'Facebook Ads Campaign Update',
-      content: 'Hi John, I wanted to update you on your Facebook ads campaign performance. We\'ve seen a 25% increase in conversions this month...',
-      is_read: false,
-      created_at: '2024-01-14T16:30:00Z'
-    },
-    {
-      id: '2',
-      sender_id: 'admin-2',
-      sender_name: 'Mike Chen',
-      sender_type: 'admin',
-      subject: 'Website Security Update Complete',
-      content: 'Your website security update has been completed successfully. All systems are running smoothly...',
-      is_read: false,
-      created_at: '2024-01-13T10:15:00Z'
-    },
-    {
-      id: '3',
-      sender_id: 'client-1',
-      sender_name: 'John Doe',
-      sender_type: 'client',
-      subject: 'Question about Shopify Integration',
-      content: 'I have a question about integrating a new payment gateway with my Shopify store...',
-      is_read: true,
-      created_at: '2024-01-12T14:20:00Z'
-    }
-  ]);
-
-  const [profile] = useState<ClientProfile>({
-    full_name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    company: 'Doe Enterprises',
-    website: 'https://doeenterprises.com',
-    address: '123 Business Ave, Suite 100\nNew York, NY 10001',
-    timezone: 'UTC-05:00',
-    language: 'en'
-  });
 
   const [notificationSettings] = useState<ClientNotificationSettings>({
     email_notifications: true,
@@ -203,18 +45,8 @@ const ClientDashboardPage: React.FC = () => {
     marketing_emails: false
   });
 
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   // Event handlers
   const handleServiceAction = async (serviceId: string, action: 'pause' | 'resume' | 'cancel' | 'renew') => {
-    try {
       // In a real app, this would make an API call
       toast.success(`Service ${action} request submitted successfully!`);
     } catch (error) {
@@ -222,9 +54,11 @@ const ClientDashboardPage: React.FC = () => {
     }
   };
 
-  const handleMessageClick = (message: ClientMessage) => {
+  const handleMessageClick = async (message: any) => {
     // In a real app, this would open a message detail view or mark as read
-    console.log('Message clicked:', message);
+    if (!message.is_read) {
+      await markMessageAsRead(message.id);
+    }
   };
 
   const handleNewMessage = () => {
@@ -232,7 +66,7 @@ const ClientDashboardPage: React.FC = () => {
     toast.success('Compose message feature coming soon!');
   };
 
-  const handleUpdateProfile = async (updatedProfile: Partial<ClientProfile>) => {
+  const handleUpdateProfile = async (updatedProfile: any) => {
     try {
       // In a real app, this would make an API call
       toast.success('Profile updated successfully!');
@@ -260,8 +94,7 @@ const ClientDashboardPage: React.FC = () => {
   };
 
   const handleSignOut = () => {
-    // In a real app, this would sign out the user
-    toast.success('Signed out successfully!');
+    // This will be handled by the auth context
   };
 
   // Get page info based on active tab
@@ -303,7 +136,7 @@ const ClientDashboardPage: React.FC = () => {
   const pageInfo = getPageInfo();
   const unreadMessages = messages.filter(m => !m.is_read).length;
 
-  if (loading || isLoading) {
+  if (authLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -314,9 +147,9 @@ const ClientDashboardPage: React.FC = () => {
     );
   }
 
-  // In a real app, you'd check if the user is authenticated and has client access
-  if (!user) {
-    return <Navigate to="/admin/login" replace />;
+  // Redirect to login if not authenticated or no profile
+  if (!user || !clientProfile) {
+    return <Navigate to="/client_area/login" replace />;
   }
 
   return (
@@ -338,7 +171,7 @@ const ClientDashboardPage: React.FC = () => {
           title={pageInfo.title}
           subtitle={pageInfo.subtitle}
           isCollapsed={isCollapsed}
-          user={clientUser}
+          user={clientProfile}
           notifications={3}
         />
 
@@ -355,12 +188,12 @@ const ClientDashboardPage: React.FC = () => {
                 className="space-y-8"
               >
                 {/* Stats */}
-                <OverviewStats stats={stats} isLoading={false} />
+                <OverviewStats stats={stats} isLoading={dataLoading} />
 
                 {/* Activity Timeline */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2">
-                    <ActivityTimeline activities={activities} isLoading={false} />
+                    <ActivityTimeline activities={activities} isLoading={dataLoading} />
                   </div>
                   
                   {/* Quick Actions */}
@@ -436,7 +269,7 @@ const ClientDashboardPage: React.FC = () => {
                   messages={messages}
                   onMessageClick={handleMessageClick}
                   onNewMessage={handleNewMessage}
-                  isLoading={false}
+                  isLoading={dataLoading}
                 />
               </motion.div>
             )}
@@ -452,7 +285,7 @@ const ClientDashboardPage: React.FC = () => {
                 <ServicesList
                   services={services}
                   onServiceAction={handleServiceAction}
-                  isLoading={false}
+                  isLoading={dataLoading}
                 />
               </motion.div>
             )}
@@ -466,12 +299,12 @@ const ClientDashboardPage: React.FC = () => {
                 transition={{ duration: 0.3 }}
               >
                 <ProfileSettings
-                  profile={profile}
+                  profile={clientProfile}
                   notificationSettings={notificationSettings}
                   onUpdateProfile={handleUpdateProfile}
                   onUpdateNotifications={handleUpdateNotifications}
                   onChangePassword={handleChangePassword}
-                  isLoading={false}
+                  isLoading={dataLoading}
                 />
               </motion.div>
             )}

@@ -1,13 +1,9 @@
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export interface ClientProfileData {
-  full_name: string;
-  email: string;
-  phone: string;
-  company?: string;
-  address?: string;
-}
+import { ClientProfile } from '../types/client';
+
+export type ClientProfileData = Omit<ClientProfile, 'id' | 'created_at' | 'updated_at' | 'last_login' | 'total_spent'>;
 
 export interface ClientProfileCreationResult {
   success: boolean;
@@ -80,19 +76,22 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
     }
 
     // Step 2: Create client profile record
-    const clientProfile = {
-      id: authData.user.id,
-      email: profileData.email,
-      full_name: profileData.full_name,
-      phone: profileData.phone,
-      company: profileData.company || '',
-      address: profileData.address || '',
-      created_at: new Date().toISOString(),
-      account_status: 'pending' as const
-    };
+    // The client profile will be automatically created by the database trigger
+    // We just need to update it with additional information
+    const { error: profileError } = await supabase
+      .from('client_profiles')
+      .update({
+        company: profileData.company || '',
+        website: profileData.website || '',
+        address: profileData.address || '',
+        account_status: 'active'
+      })
+      .eq('id', authData.user.id);
 
-    // Note: In a real application, you would create a clients table
-    // For now, we'll use the user metadata and a separate client_profiles table if needed
+    if (profileError) {
+      console.error('Profile update error:', profileError);
+      // Don't fail the entire process if profile update fails
+    }
     
     // Step 3: Send welcome email with credentials (placeholder for email service)
     await sendWelcomeEmail(profileData.email, profileData.full_name, generatedPassword);
