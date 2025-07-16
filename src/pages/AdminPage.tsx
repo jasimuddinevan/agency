@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { UsersIcon, CogIcon } from '@heroicons/react/24/outline';
 
@@ -16,6 +16,18 @@ import ApplicationDetails from '../components/admin/applications/ApplicationDeta
 import ApplicationEditForm from '../components/admin/applications/ApplicationEditForm';
 import ConfirmationModal from '../components/admin/common/ConfirmationModal';
 import MessageCenter from '../components/admin/messaging/MessageCenter';
+import SettingsLayout from '../components/admin/settings/SettingsLayout';
+import GeneralSettings from '../components/admin/settings/GeneralSettings';
+import NotificationSettings from '../components/admin/settings/NotificationSettings';
+import SecuritySettings from '../components/admin/settings/SecuritySettings';
+import ApiSettings from '../components/admin/settings/ApiSettings';
+import BackupSettings from '../components/admin/settings/BackupSettings';
+import SystemLogs from '../components/admin/settings/SystemLogs';
+import PerformanceSettings from '../components/admin/settings/PerformanceSettings';
+import MaintenanceSettings from '../components/admin/settings/MaintenanceSettings';
+import CacheSettings from '../components/admin/settings/CacheSettings';
+import ImportExportSettings from '../components/admin/settings/ImportExportSettings';
+import DiagnosticsSettings from '../components/admin/settings/DiagnosticsSettings';
 
 // Import types
 import { Application, DashboardStats as StatsType, BreadcrumbItem } from '../types/admin';
@@ -31,9 +43,11 @@ const AdminPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState<Application | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('general');
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<StatsType>({
     total: 0,
+    
     new: 0,
     in_progress: 0,
     contacted: 0,
@@ -358,18 +372,31 @@ const AdminPage: React.FC = () => {
             )}
 
             {activeTab === 'settings' && (
-              <motion.div
-                key="settings"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="text-center py-12"
-              >
-                <CogIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
-                <p className="text-gray-600 mt-2">Settings panel coming soon</p>
-              </motion.div>
+              <MotionConfig transition={{ duration: 0.3 }}>
+                <motion.div
+                  key="settings"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="h-[calc(100vh-200px)]"
+                >
+                  <SettingsLayout activeTab={settingsTab} onTabChange={setSettingsTab}>
+                    <AnimatePresence mode="wait">
+                      {settingsTab === 'general' && <GeneralSettings />}
+                      {settingsTab === 'notifications' && <NotificationSettings />}
+                      {settingsTab === 'security' && <SecuritySettings />}
+                      {settingsTab === 'api' && <ApiSettings />}
+                      {settingsTab === 'backups' && <BackupSettings />}
+                      {settingsTab === 'logs' && <SystemLogs />}
+                      {settingsTab === 'performance' && <PerformanceSettings />}
+                      {settingsTab === 'maintenance' && <MaintenanceSettings />}
+                      {settingsTab === 'cache' && <CacheSettings />}
+                      {settingsTab === 'import-export' && <ImportExportSettings />}
+                      {settingsTab === 'diagnostics' && <DiagnosticsSettings />}
+                    </AnimatePresence>
+                  </SettingsLayout>
+                </motion.div>
+              </MotionConfig>
             )}
           </AnimatePresence>
         </main>
