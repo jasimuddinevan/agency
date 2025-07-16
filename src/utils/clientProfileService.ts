@@ -80,8 +80,22 @@ const sendWelcomeEmailViaEdgeFunction = async (
  */
 export const createClientProfile = async (profileData: ClientProfileData): Promise<ClientProfileCreationResult> => {
   try {
-    // First check if user already exists
-    const { data: existingUser } = await supabase.auth.getUser();
+    // Check if email is already registered in auth
+    const { data: existingUsers, error: checkError } = await supabase.auth.admin.listUsers();
+    if (checkError) {
+      console.error('Error checking existing users:', checkError);
+    } else {
+      const emailExists = existingUsers.users.some(user => 
+        user.email?.toLowerCase() === profileData.email.toLowerCase()
+      );
+      
+      if (emailExists) {
+        return {
+          success: false,
+          error: 'User already registered'
+        };
+      }
+    }
     
     // Check if email is already registered
     const { data: existingProfile } = await supabase
@@ -155,7 +169,7 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
     }
     
     // Step 3: Send welcome email with credentials (placeholder for email service)
-    const emailResult = await sendWelcomeEmailViaEdgeFunction(
+    /* const emailResult = await sendWelcomeEmailViaEdgeFunction(
       profileData.email, 
       profileData.full_name, 
       generatedPassword,
@@ -170,7 +184,9 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
       toast.error('Account created but welcome email failed to send');
     } else {
       toast.success('Account created and welcome email sent successfully!');
-    }
+    } */
+    
+    // Skip email sending for now due to domain verification issues
 
     return {
       success: true,

@@ -52,26 +52,8 @@ export const useMessaging = () => {
 
       if (error) throw error;
 
-      // Handle broadcast messages for clients
-      if (!isAdmin) {
-        const { data: broadcastMessages, error: broadcastError } = await supabase
-          .from('message_recipients')
-          .select(`
-            message:message_id(*)
-          `)
-          .eq('recipient_id', user.id);
-
-        if (broadcastError) throw broadcastError;
-
-        const broadcasts = broadcastMessages?.map(br => ({
-          ...br.message,
-          receiver_id: user.id // Set current user as receiver for display
-        })) || [];
-
-        setMessages([...data || [], ...broadcasts]);
-      } else {
-        setMessages(data || []);
-      }
+      // Set messages directly without trying to join sender information
+      setMessages(data || []);
 
       await fetchStats();
     } catch (err) {

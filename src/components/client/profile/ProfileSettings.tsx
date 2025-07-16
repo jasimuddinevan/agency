@@ -12,6 +12,7 @@ import {
   EyeSlashIcon
 } from '@heroicons/react/24/outline';
 import { ClientProfile, ClientNotificationSettings } from '../../../types/client';
+import PasswordChangeForm from './PasswordChangeForm';
 
 interface ProfileSettingsProps {
   profile: ClientProfile;
@@ -50,17 +51,12 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   isLoading = false
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const profileForm = useForm({
     resolver: yupResolver(profileSchema),
     defaultValues: profile
-  });
-
-  const passwordForm = useForm({
-    resolver: yupResolver(passwordSchema)
   });
 
   const [localNotificationSettings, setLocalNotificationSettings] = useState(notificationSettings);
@@ -96,9 +92,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     await onUpdateProfile(data);
   };
 
-  const onPasswordSubmit = async (data: { currentPassword: string; newPassword: string }) => {
-    await onChangePassword(data.currentPassword, data.newPassword);
-    passwordForm.reset();
+  const handlePasswordChangeSuccess = () => {
+    toast.success('Password updated successfully');
   };
 
   const handleNotificationChange = (key: keyof ClientNotificationSettings, value: boolean) => {
@@ -309,122 +304,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-medium text-yellow-800">Security Notice</h4>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    Choose a strong password with at least 8 characters, including uppercase, lowercase, numbers, and special characters.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Current Password *
-                </label>
-                <div className="relative">
-                  <input
-                    {...passwordForm.register('currentPassword')}
-                    type={showCurrentPassword ? 'text' : 'password'}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showCurrentPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {passwordForm.formState.errors.currentPassword && (
-                  <p className="mt-1 text-sm text-red-600">{passwordForm.formState.errors.currentPassword.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  New Password *
-                </label>
-                <div className="relative">
-                  <input
-                    {...passwordForm.register('newPassword')}
-                    type={showNewPassword ? 'text' : 'password'}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showNewPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {passwordForm.formState.errors.newPassword && (
-                  <p className="mt-1 text-sm text-red-600">{passwordForm.formState.errors.newPassword.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm New Password *
-                </label>
-                <div className="relative">
-                  <input
-                    {...passwordForm.register('confirmPassword')}
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-                {passwordForm.formState.errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{passwordForm.formState.errors.confirmPassword.message}</p>
-                )}
-              </div>
-
-              <div className="flex justify-end">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <CheckIcon className="h-4 w-4 mr-2" />
-                      Update Password
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </form>
+            <PasswordChangeForm onSuccess={handlePasswordChangeSuccess} />
           </motion.div>
         )}
 

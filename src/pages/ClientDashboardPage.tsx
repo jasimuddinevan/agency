@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Navigate } from 'react-router-dom';
 import { useClientAuth } from '../contexts/ClientAuthContext';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
 // Import client components
 import ClientSidebar from '../components/client/layout/ClientSidebar';
@@ -132,10 +133,16 @@ const ClientDashboardPage: React.FC = () => {
 
   const handleChangePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      // In a real app, this would make an API call
-      toast.success('Password changed successfully!');
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Password updated successfully');
     } catch (error) {
-      toast.error('Failed to change password. Please try again.');
+      console.error('Error updating password:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update password');
     }
   };
 
