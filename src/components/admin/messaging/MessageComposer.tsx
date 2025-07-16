@@ -60,7 +60,7 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Fetch client profiles
+      // Only fetch clients who have client profiles (valid UUIDs)
       const { data: clientProfiles, error: clientError } = await supabase
         .from('client_profiles')
         .select('id, full_name, email, company')
@@ -69,40 +69,15 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
 
       if (clientError) throw clientError;
 
-      // Fetch applicants who might not have client profiles yet
-      const { data: applications, error: appError } = await supabase
-        .from('applications')
-        .select('email, full_name')
-        .neq('status', 'rejected')
-        .order('full_name');
-
-      if (appError) throw appError;
-
-      // Combine and deduplicate
-      const clientMap = new Map<string, ClientOption>();
-      
-      // Add client profiles first (they have priority)
-      clientProfiles?.forEach(client => {
-        clientMap.set(client.email, {
+      // Convert client profiles to ClientOption format
+      const clients: ClientOption[] = clientProfiles?.map(client => ({
           id: client.id,
           full_name: client.full_name,
           email: client.email,
           company: client.company
-        });
-      });
+        })) || [];
 
-      // Add applicants who don't have client profiles
-      applications?.forEach(app => {
-        if (!clientMap.has(app.email)) {
-          clientMap.set(app.email, {
-            id: app.email, // Use email as ID for applicants without profiles
-            full_name: app.full_name,
-            email: app.email
-          });
-        }
-      });
-
-      setAvailableClients(Array.from(clientMap.values()));
+      setAvailableClients(clients);
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to load clients');
