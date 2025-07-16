@@ -336,7 +336,18 @@ const BackupSettings: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              // Simulate download
+                              // Create a dummy file for download demonstration
+                              const fileName = backup.filename;
+                              const content = `This is a simulated backup file: ${backup.filename}`;
+                              const blob = new Blob([content], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = fileName;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
                               toast.success('Backup download started');
                             }}
                             disabled={backup.status !== 'completed'}

@@ -103,17 +103,27 @@ const ImportExportSettings: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      // In a real app, this would generate and download a file
       toast.success('Data exported successfully');
       
       // Simulate file download
       const fileName = `growthpro-export${includeTimestamp ? `-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}` : ''}.${exportFormat}`;
       
-      // Create a fake download link
+      // Create a dummy file for download demonstration
+      const content = `This is a simulated export file in ${exportFormat} format.\n\nSelected data types:\n${selectedOptions.map(opt => `- ${opt.name}`).join('\n')}`;
+      const mimeTypes = {
+        json: 'application/json',
+        csv: 'text/csv',
+        xml: 'application/xml'
+      };
+      const blob = new Blob([content], { type: mimeTypes[exportFormat as keyof typeof mimeTypes] || 'text/plain' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = '#';
+      link.href = url;
       link.download = fileName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       toast.error('Failed to export data');
       console.error('Error exporting data:', error);
@@ -148,6 +158,15 @@ const ImportExportSettings: React.FC = () => {
         setImportProgress(i);
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+      
+      // Read the file content to show we're actually processing it
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result;
+        console.log('Imported file content:', content);
+        // In a real app, we would parse and process this content
+      };
+      reader.readAsText(selectedFile);
       
       toast.success('Data imported successfully');
       setSelectedFile(null);
@@ -386,6 +405,20 @@ const ImportExportSettings: React.FC = () => {
                 <button
                   type="button"
                   className="flex items-center w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => {
+                    // Create a dummy template file for download
+                    const content = 'id,name,email,role\n1,John Doe,john@example.com,admin\n2,Jane Smith,jane@example.com,user';
+                    const blob = new Blob([content], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'user-import-template.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    toast.success('User import template downloaded');
+                  }}
                 >
                   <DocumentArrowDownIcon className="h-4 w-4 text-blue-600 mr-2" />
                   User Import Template
@@ -393,6 +426,20 @@ const ImportExportSettings: React.FC = () => {
                 <button
                   type="button"
                   className="flex items-center w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => {
+                    // Create a dummy template file for download
+                    const content = 'id,business_name,website_url,business_description,industry,monthly_revenue,status\n1,Example Business,https://example.com,A sample business,Technology,$10K - $25K,new';
+                    const blob = new Blob([content], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'application-import-template.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    toast.success('Application import template downloaded');
+                  }}
                 >
                   <DocumentArrowDownIcon className="h-4 w-4 text-blue-600 mr-2" />
                   Application Import Template
@@ -400,6 +447,20 @@ const ImportExportSettings: React.FC = () => {
                 <button
                   type="button"
                   className="flex items-center w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => {
+                    // Create a dummy template file for download
+                    const content = 'id,name,type,status,plan,price,billing_cycle\n1,Website Management,web-management,active,premium,99,monthly';
+                    const blob = new Blob([content], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'service-import-template.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    toast.success('Service import template downloaded');
+                  }}
                 >
                   <DocumentArrowDownIcon className="h-4 w-4 text-blue-600 mr-2" />
                   Service Import Template
@@ -416,6 +477,34 @@ const ImportExportSettings: React.FC = () => {
                 <button
                   type="button"
                   className="flex items-center w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => {
+                    // Create a dummy export file
+                    const content = JSON.stringify({
+                      metadata: {
+                        exportDate: new Date().toISOString(),
+                        environment: 'production',
+                        version: '1.0.0'
+                      },
+                      data: {
+                        applications: [
+                          { id: '1', business_name: 'Example Corp', status: 'approved' }
+                        ],
+                        users: [
+                          { id: '1', email: 'admin@example.com', role: 'admin' }
+                        ]
+                      }
+                    }, null, 2);
+                    const blob = new Blob([content], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'production-data-export.json';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    toast.success('Production data exported');
+                  }}
                 >
                   <ArrowDownTrayIcon className="h-4 w-4 text-blue-600 mr-2" />
                   Export Production Data
