@@ -274,8 +274,8 @@ export const useMessaging = () => {
         .from('messages')
         .select(`
           *,
-          sender:sender_id(id, full_name, email),
-          receiver:receiver_id(id, full_name, email)
+          sender:users!messages_sender_id_fkey(id, full_name, email),
+          receiver:users!messages_receiver_id_fkey(id, full_name, email)
         `)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${participantId}),and(sender_id.eq.${participantId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
