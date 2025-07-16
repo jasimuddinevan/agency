@@ -39,9 +39,7 @@ export const useMessaging = () => {
       let query = supabase
         .from('messages')
         .select(`
-          *,
-          sender:sender_id(id, full_name, email),
-          receiver:receiver_id(id, full_name, email)
+          id, sender_id, receiver_id, content, subject, message_type, is_read, read_at, created_at, updated_at
         `)
         .order('created_at', { ascending: false });
 
@@ -96,8 +94,9 @@ export const useMessaging = () => {
       const { data: conversationData, error } = await supabase.rpc('get_conversation_summaries', {
         admin_user_id: user.id
       });
-
+      
       if (error) {
+        console.error('RPC error:', error);
         // Fallback to manual query if RPC doesn't exist
         const { data: directMessages, error: directError } = await supabase
           .from('messages')
@@ -107,8 +106,6 @@ export const useMessaging = () => {
             content,
             created_at,
             is_read,
-            sender:sender_id(id, full_name, email),
-            receiver:receiver_id(id, full_name, email)
           `)
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
@@ -273,9 +270,7 @@ export const useMessaging = () => {
       const { data, error } = await supabase
         .from('messages')
         .select(`
-          *,
-          sender:users!messages_sender_id_fkey(id, full_name, email),
-          receiver:users!messages_receiver_id_fkey(id, full_name, email)
+          id, sender_id, receiver_id, content, subject, message_type, is_read, read_at, created_at, updated_at
         `)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${participantId}),and(sender_id.eq.${participantId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
