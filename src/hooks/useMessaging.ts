@@ -185,13 +185,14 @@ export const useMessaging = () => {
   const sendMessage = useCallback(async (messageData: SendMessageRequest) => {
     if (!user) throw new Error('User not authenticated');
 
+    console.log('Sending message with data:', messageData);
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
-          receiver_id: messageData.receiver_id || null,
+          receiver_id: messageData.receiver_id,
           content: messageData.content,
           subject: messageData.subject,
           message_type: messageData.message_type
@@ -201,6 +202,7 @@ export const useMessaging = () => {
 
       if (error) throw error;
 
+      console.log('Message sent successfully:', data);
       // Handle broadcast message recipients
       if (messageData.message_type === 'broadcast' && messageData.recipient_ids?.length) {
         const recipients = messageData.recipient_ids.map(recipientId => ({

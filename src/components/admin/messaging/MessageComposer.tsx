@@ -60,23 +60,44 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Fetch all client profiles to get potential recipients
-      const { data: clientProfiles, error: clientError } = await supabase
-        .from('client_profiles')
-        .select('id, full_name, email, company')
-        .order('full_name');
+      // Fetch from applications table instead since it has data
+      const { data: applications, error: appError } = await supabase
+        .from('applications')
+        .select('id, full_name, email, business_name')
+        .order('created_at', { ascending: false });
 
-      if (clientError) throw clientError;
+      if (appError) throw appError;
 
-      // Convert client profiles to ClientOption format
-      const clients: ClientOption[] = clientProfiles?.map(client => ({
+      // Convert applications to ClientOption format
+      const clients: ClientOption[] = applications?.map(app => ({
+          id: app.id,
+          full_name: app.full_name,
+          email: app.email,
+          company: app.business_name
+        })) || [];
+
+      console.log('Fetched clients:', clients);
+      setAvailableClients(clients);
+
+      // If no applications found, try fetching admin users as fallback
+      if (clients.length === 0) {
+        const { data: adminUsers, error: adminError } = await supabase
+          .from('admin_users')
+          .select('id, full_name, email')
+          .neq('id', user?.id) // Exclude current user
+          .order('full_name');
+
+        if (adminError) throw adminError;
+
+        const adminClients: ClientOption[] = adminUsers?.map(admin => ({
           id: client.id,
           full_name: client.full_name,
           email: client.email,
-          company: client.company
+          company: 'Admin'
         })) || [];
 
-      setAvailableClients(clients);
+        setAvailableClients([...clients, ...adminClients]);
+      }
     } catch (error) {
       console.error('Error fetching clients:', error);
       toast.error('Failed to load clients');
@@ -107,14 +128,6 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const handleSend = async () => {
     if (!validateForm()) return;
 
-    // For testing purposes, use a direct message to the first recipient
-    const recipientId = selectedClients[0]?.id;
-    
-    if (!recipientId) {
-      toast.error('No valid recipient selected');
-      return;
-    }
-
     try {
       if (messageType === 'broadcast') {
         await sendMessage({
@@ -126,6 +139,7 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
       } else {
         // Send individual messages to each selected client
         for (const client of selectedClients) {
+          console.log('Sending message to client:', client);
           await sendMessage({
             receiver_id: client.id,
             content,
