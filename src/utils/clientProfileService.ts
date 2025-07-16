@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { sendWelcomeEmail } from '../lib/email';
 
 import { ClientProfile } from '../types/client';
 
@@ -103,7 +104,22 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
     }
     
     // Step 3: Send welcome email with credentials (placeholder for email service)
-    await sendWelcomeEmail(profileData.email, profileData.full_name, generatedPassword);
+    const emailResult = await sendWelcomeEmail(
+      profileData.email, 
+      profileData.full_name, 
+      generatedPassword,
+      {
+        companyName: profileData.company || 'Your Business'
+      }
+    );
+
+    if (!emailResult.success) {
+      console.error('Failed to send welcome email:', emailResult.error);
+      // Don't fail the entire process if email fails, but log it
+      toast.error('Account created but welcome email failed to send');
+    } else {
+      toast.success('Account created and welcome email sent successfully!');
+    }
 
     return {
       success: true,
@@ -117,41 +133,6 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
-  }
-};
-
-/**
- * Send welcome email with login credentials
- * Note: This is a placeholder - actual email service integration needed
- */
-const sendWelcomeEmail = async (email: string, fullName: string, password: string): Promise<void> => {
-  try {
-    // Placeholder for email service integration
-    // In production, this would integrate with your email service (SendGrid, AWS SES, etc.)
-    
-    const emailData = {
-      to: email,
-      subject: 'Welcome to GrowthPro - Your Account is Ready!',
-      template: 'welcome-client',
-      data: {
-        fullName,
-        email,
-        password,
-        loginUrl: `${window.location.origin}/client_area`,
-        supportEmail: 'support@growthpro.com'
-      }
-    };
-
-    // This would be replaced with actual email service call
-    console.log('Email would be sent:', emailData);
-    
-    // For development, show a toast notification
-    toast.success(`Welcome email would be sent to ${email}`);
-    
-  } catch (error) {
-    console.error('Email sending error:', error);
-    // Don't fail the entire process if email fails
-    toast.error('Account created but welcome email failed to send');
   }
 };
 
