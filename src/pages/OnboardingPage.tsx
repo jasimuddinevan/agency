@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { createClientProfile, signInClient, ClientProfileData } from '../utils/clientProfileService';
 import { 
   CheckCircleIcon, 
   ArrowRightIcon, 
@@ -18,7 +20,8 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  SparklesIcon as SparklesOutlineIcon
 } from '@heroicons/react/24/outline';
 
 // Validation schemas
@@ -42,6 +45,9 @@ const OnboardingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [clientCredentials, setClientCredentials] = useState<{ email: string; password: string } | null>(null);
+  const navigate = useNavigate();
 
   const industries = [
     'E-commerce', 'Fashion', 'Beauty & Cosmetics', 'Health & Wellness',
@@ -76,6 +82,7 @@ const OnboardingPage: React.FC = () => {
     const fullData = { ...formData, ...data };
     
     try {
+      // Step 1: Create application record
       const { error } = await supabase
         .from('applications')
         .insert([{
@@ -94,14 +101,61 @@ const OnboardingPage: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Application submitted successfully!');
+      // Step 2: Create client profile silently in background
+      setIsCreatingProfile(true);
+      
+      const profileData: ClientProfileData = {
+        full_name: fullData.fullName,
+        email: fullData.email,
+        phone: fullData.phone,
+        company: fullData.businessName,
+        address: fullData.address
+      };
+
+      const profileResult = await createClientProfile(profileData);
+      
+      if (profileResult.success && profileResult.password) {
+        setClientCredentials({
+          email: fullData.email,
+          password: profileResult.password
+        });
+        toast.success('Application submitted and account created successfully!');
+      } else {
+        console.error('Profile creation failed:', profileResult.error);
+        toast.success('Application submitted successfully!');
+        // Continue to success page even if profile creation fails
+      }
+
       setCurrentStep(3);
     } catch (error) {
       toast.error('Failed to submit application. Please try again.');
       console.error('Error submitting application:', error);
     } finally {
       setIsSubmitting(false);
+      setIsCreatingProfile(false);
     }
+  };
+
+  const handleCompleteNow = async () => {
+    if (clientCredentials) {
+      // Auto sign-in the user
+      const signInSuccess = await signInClient(clientCredentials.email, clientCredentials.password);
+      
+      if (signInSuccess) {
+        toast.success('Signed in successfully!');
+        navigate('/subscribe');
+      } else {
+        toast.error('Auto sign-in failed. Please sign in manually.');
+        navigate('/subscribe');
+      }
+    } else {
+      // Fallback if no credentials available
+      navigate('/subscribe');
+    }
+  };
+
+  const handleDecline = () => {
+    navigate('/client_area');
   };
 
   const steps = [
@@ -506,49 +560,102 @@ const OnboardingPage: React.FC = () => {
                 animate="animate"
                 className="p-8 lg:p-12 text-center"
               >
+                {/* Success Icon with Loading State */}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
-                  className="w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8"
+                  className="w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 relative"
                 >
-                  <CheckCircleIcon className="h-12 w-12 text-white" />
+                  {isCreatingProfile ? (
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  ) : (
+                    <CheckCircleIcon className="h-12 w-12 text-white" />
+                  )}
+                  
+                  {/* Processing indicator */}
+                  {isCreatingProfile && (
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                      <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        Setting up account...
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
 
                 <h2 className="text-4xl font-bold text-slate-900 mb-4">Application Submitted Successfully!</h2>
-                <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-                  Thank you for your interest in GrowthPro. We've received your application and our team will review it shortly.
+                
+                {/* Updated success message */}
+                <p className="text-xl text-slate-600 mb-12 max-w-2xl mx-auto">
+                  Thank you, we've got your information, you are just 1 step away...
                 </p>
                 
+                {/* Account Creation Status */}
+                {clientCredentials && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8"
+                  >
+                    <div className="flex items-center justify-center mb-4">
+                      <CheckCircleIcon className="h-6 w-6 text-green-600 mr-2" />
+                      <span className="text-green-800 font-semibold">Account Created Successfully!</span>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      Your client account has been created and login credentials have been sent to your email.
+                    </p>
+                  </motion.div>
+                )}
+
+                {/* Action Options */}
                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 mb-8 border border-blue-200">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6">What happens next?</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">1</span>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-6">Choose Your Next Step</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                    {/* Option 1: Complete Now */}
+                    <motion.button
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleCompleteNow}
+                      disabled={isCreatingProfile}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center justify-center mb-3">
+                        <SparklesOutlineIcon className="h-8 w-8 mr-2" />
                       </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Review & Analysis</h4>
-                      <p className="text-slate-600 text-sm">Our team reviews your application within 24 hours</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">2</span>
+                      <h4 className="text-xl font-bold mb-2">Complete Now</h4>
+                      <p className="text-blue-100 text-sm">
+                        Choose your service package and get started immediately
+                      </p>
+                      <div className="mt-4 text-xs text-blue-200">
+                        ✓ Automatic login • ✓ Instant access
                       </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Strategy Call</h4>
-                      <p className="text-slate-600 text-sm">We contact you to discuss your personalized growth strategy</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold">3</span>
+                    </motion.button>
+
+                    {/* Option 2: Decline */}
+                    <motion.button
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDecline}
+                      className="bg-white border-2 border-slate-300 text-slate-700 p-6 rounded-xl hover:border-slate-400 hover:bg-slate-50 transition-all duration-300 shadow-md hover:shadow-lg"
+                    >
+                      <div className="flex items-center justify-center mb-3">
+                        <UserIcon className="h-8 w-8 mr-2 text-slate-600" />
                       </div>
-                      <h4 className="font-semibold text-slate-900 mb-2">Get Started</h4>
-                      <p className="text-slate-600 text-sm">Begin your journey to business growth and success</p>
-                    </div>
+                      <h4 className="text-xl font-bold mb-2">Access Client Area</h4>
+                      <p className="text-slate-600 text-sm">
+                        Go to your client dashboard to manage your account
+                      </p>
+                      <div className="mt-4 text-xs text-slate-500">
+                        ✓ Account management • ✓ Service tracking
+                      </div>
+                    </motion.button>
                   </div>
                 </div>
 
+                {/* Contact Information */}
                 <div className="bg-gradient-to-r from-slate-900 to-blue-900 rounded-2xl p-8 text-white">
-                  <h3 className="text-xl font-bold mb-4">Need immediate assistance?</h3>
+                  <h3 className="text-xl font-bold mb-4">Need Help?</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="text-center">
                       <EnvelopeIcon className="h-8 w-8 mx-auto mb-2 text-blue-300" />
@@ -566,7 +673,7 @@ const OnboardingPage: React.FC = () => {
                     </div>
                   </div>
                   <p className="text-blue-200 text-sm mt-4">
-                    Expected response time: 4-6 hours during business hours
+                    Our support team is available 24/7 to assist you
                   </p>
                 </div>
               </motion.div>
