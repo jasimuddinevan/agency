@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { UsersIcon, CogIcon } from '@heroicons/react/24/outline';
 
 // Import admin components
+import MarketingDashboard from '../components/admin/marketing/MarketingDashboard';
 import AdminSidebar from '../components/admin/layout/AdminSidebar';
 import AdminHeader from '../components/admin/layout/AdminHeader';
 import DashboardStats from '../components/admin/dashboard/DashboardStats';
@@ -188,6 +189,11 @@ const AdminPage: React.FC = () => {
           title: 'Applications',
           subtitle: 'Manage all business applications'
         };
+      case 'marketing':
+        return {
+          title: 'Marketing',
+          subtitle: 'Manage email campaigns and marketing automation'
+        };
       case 'users':
         return {
           title: 'Users',
@@ -302,6 +308,18 @@ const AdminPage: React.FC = () => {
                   onDelete={handleDeleteApplication}
                   isLoading={isLoading}
                 />
+              </motion.div>
+            )}
+
+            {activeTab === 'marketing' && (
+              <motion.div
+                key="marketing"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <MarketingDashboard isLoading={isLoading} />
               </motion.div>
             )}
 

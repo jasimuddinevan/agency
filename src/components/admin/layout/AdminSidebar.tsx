@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   HomeIcon,
   DocumentTextIcon,
+  MegaphoneIcon,
   UserGroupIcon,
   CogIcon,
   ArrowRightOnRectangleIcon,
@@ -29,6 +30,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const navigationItems: NavigationItem[] = [
     { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
     { id: 'applications', name: 'Applications', icon: DocumentTextIcon },
+    { id: 'marketing', name: 'Marketing', icon: MegaphoneIcon },
     { id: 'users', name: 'Users', icon: UserGroupIcon },
     { id: 'settings', name: 'Settings', icon: CogIcon }
   ];
