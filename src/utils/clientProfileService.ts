@@ -76,21 +76,30 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
     }
 
     // Step 2: Create client profile record
-    // The client profile will be automatically created by the database trigger
-    // We just need to update it with additional information
+    // Use upsert to create or update the client profile record
     const { error: profileError } = await supabase
       .from('client_profiles')
-      .update({
+      .upsert({
+        id: authData.user.id,
+        email: profileData.email,
+        full_name: profileData.full_name,
+        phone: profileData.phone || null,
         company: profileData.company || '',
         website: profileData.website || '',
         address: profileData.address || '',
-        account_status: 'active'
+        account_status: 'active',
+        timezone: 'UTC',
+        language: 'en'
       })
-      .eq('id', authData.user.id);
+      .select()
+      .single();
 
     if (profileError) {
       console.error('Profile update error:', profileError);
-      // Don't fail the entire process if profile update fails
+      return {
+        success: false,
+        error: `Failed to create client profile: ${profileError.message}`
+      };
     }
     
     // Step 3: Send welcome email with credentials (placeholder for email service)
