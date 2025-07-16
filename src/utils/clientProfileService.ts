@@ -80,6 +80,23 @@ const sendWelcomeEmailViaEdgeFunction = async (
  */
 export const createClientProfile = async (profileData: ClientProfileData): Promise<ClientProfileCreationResult> => {
   try {
+    // First check if user already exists
+    const { data: existingUser } = await supabase.auth.getUser();
+    
+    // Check if email is already registered
+    const { data: existingProfile } = await supabase
+      .from('client_profiles')
+      .select('id, email')
+      .eq('email', profileData.email)
+      .maybeSingle();
+
+    if (existingProfile) {
+      return {
+        success: false,
+        error: 'User already registered'
+      };
+    }
+
     // Generate random password
     const generatedPassword = generateRandomPassword();
     

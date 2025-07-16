@@ -120,6 +120,9 @@ const OnboardingPage: React.FC = () => {
           password: profileResult.password
         });
         toast.success('Application submitted and account created successfully!');
+      } else if (profileResult.error && profileResult.error.includes('User already registered')) {
+        toast.error('An account with this email already exists. Please log in or use a different email.');
+        return; // Don't proceed to success page
       } else {
         console.error('Profile creation failed:', profileResult.error);
         toast.success('Application submitted successfully!');

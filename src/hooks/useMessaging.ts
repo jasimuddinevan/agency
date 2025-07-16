@@ -57,10 +57,7 @@ export const useMessaging = () => {
         const { data: broadcastMessages, error: broadcastError } = await supabase
           .from('message_recipients')
           .select(`
-            message:message_id(
-              *,
-              sender:sender_id(id, full_name, email)
-            )
+            message:message_id(*)
           `)
           .eq('recipient_id', user.id);
 

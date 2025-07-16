@@ -301,7 +301,7 @@ const sendEmailWithResend = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'GrowthPro Team <noreply@growthpro.com>',
+        from: 'GrowthPro Team <noreply@resend.dev>',
         to: [to],
         subject,
         html,
