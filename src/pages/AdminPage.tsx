@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { UsersIcon, CogIcon } from '@heroicons/react/24/outline';
+import { CogIcon } from '@heroicons/react/24/outline';
 
 // Import admin components
 import MarketingDashboard from '../components/admin/marketing/MarketingDashboard';
@@ -27,6 +27,7 @@ import PerformanceSettings from '../components/admin/settings/PerformanceSetting
 import MaintenanceSettings from '../components/admin/settings/MaintenanceSettings';
 import CacheSettings from '../components/admin/settings/CacheSettings';
 import ImportExportSettings from '../components/admin/settings/ImportExportSettings';
+import UsersList from '../components/admin/users/UsersList';
 import DiagnosticsSettings from '../components/admin/settings/DiagnosticsSettings';
 
 // Import types
@@ -363,11 +364,8 @@ const AdminPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                className="text-center py-12"
               >
-                <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
-                <p className="text-gray-600 mt-2">User management features coming soon</p>
+                <UsersList isLoading={isLoading} />
               </motion.div>
             )}
 
