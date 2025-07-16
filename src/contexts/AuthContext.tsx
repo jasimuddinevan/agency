@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('admin_users')
         .select('role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (!error && data) {
         setIsAdmin(true);
@@ -63,15 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAdmin(false);
       }
     } catch (error) {
-      // Check if this is the expected "no rows returned" error for non-admin users
-      if (error && typeof error === 'object' && 'details' in error && 
-          error.details === 'The result contains 0 rows') {
-        // This is expected for non-admin users, don't log as error
-        setIsAdmin(false);
-        return;
-      }
-      
-      // Log unexpected errors
       console.error('Unexpected error checking admin status:', error);
       setIsAdmin(false);
     }

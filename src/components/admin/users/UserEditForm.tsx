@@ -228,7 +228,7 @@ const UserEditForm: React.FC<UserEditFormProps> = ({
           // Then create client profile
           const { error: clientError } = await supabase
             .from('client_profiles')
-            .insert({
+            .upsert({
               id: authData.user.id,
               email: data.email,
               full_name: data.full_name,

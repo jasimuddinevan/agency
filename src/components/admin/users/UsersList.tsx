@@ -78,7 +78,7 @@ const UsersList: React.FC<UsersListProps> = ({ isLoading = false }) => {
         .from('admin_users')
         .select('role')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       
