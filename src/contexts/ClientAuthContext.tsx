@@ -92,15 +92,19 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         .single();
       
       if (error) {
-        console.error('Error fetching client profile:', error);
-        console.error('Error fetching client profile:', error);
-        setClientProfile(null);
+        // Check if error is due to no rows found (admin users won't have client profiles)
+        if (error.code === 'PGRST116') {
+          console.warn('No client profile found for user (likely admin user):', userId);
+          setClientProfile(null);
+        } else {
+          console.error('Error fetching client profile:', error);
+          setClientProfile(null);
+        }
       } else {
         setClientProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching client profile:', error);
-      console.error('Error fetching client profile:', error);
+      console.error('Unexpected error fetching client profile:', error);
       setClientProfile(null);
     } finally {
       setLoading(false);
