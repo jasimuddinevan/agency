@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { sendWelcomeEmail } from '../lib/email';
 
 import { ClientProfile } from '../types/client';
 
@@ -39,6 +38,41 @@ const generateRandomPassword = (): string => {
   
   // Shuffle the password
   return password.split('').sort(() => Math.random() - 0.5).join('');
+};
+
+/**
+ * Send welcome email via Supabase Edge Function
+ */
+const sendWelcomeEmailViaEdgeFunction = async (
+  email: string,
+  fullName: string,
+  password: string,
+  additionalData: any = {}
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-welcome-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        email,
+        fullName,
+        password,
+        additionalData
+      })
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
 };
 
 /**
@@ -104,7 +138,7 @@ export const createClientProfile = async (profileData: ClientProfileData): Promi
     }
     
     // Step 3: Send welcome email with credentials (placeholder for email service)
-    const emailResult = await sendWelcomeEmail(
+    const emailResult = await sendWelcomeEmailViaEdgeFunction(
       profileData.email, 
       profileData.full_name, 
       generatedPassword,
