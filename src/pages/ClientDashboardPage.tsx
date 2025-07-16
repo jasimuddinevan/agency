@@ -47,6 +47,7 @@ const ClientDashboardPage: React.FC = () => {
 
   // Event handlers
   const handleServiceAction = async (serviceId: string, action: 'pause' | 'resume' | 'cancel' | 'renew') => {
+    try {
       // In a real app, this would make an API call
       toast.success(`Service ${action} request submitted successfully!`);
     } catch (error) {
