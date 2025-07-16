@@ -60,20 +60,20 @@ const MessageComposer: React.FC<MessageComposerProps> = ({
   const fetchClients = async () => {
     setIsLoadingClients(true);
     try {
-      // Fetch all applications to get potential recipients
-      const { data: applications, error: appError } = await supabase
-        .from('applications')
-        .select('id, full_name, email, business_name')
+      // Fetch all client profiles to get potential recipients
+      const { data: clientProfiles, error: clientError } = await supabase
+        .from('client_profiles')
+        .select('id, full_name, email, company')
         .order('full_name');
 
-      if (appError) throw appError;
+      if (clientError) throw clientError;
 
-      // Convert applications to ClientOption format
-      const clients: ClientOption[] = applications?.map(client => ({
+      // Convert client profiles to ClientOption format
+      const clients: ClientOption[] = clientProfiles?.map(client => ({
           id: client.id,
           full_name: client.full_name,
           email: client.email,
-          company: client.business_name
+          company: client.company
         })) || [];
 
       setAvailableClients(clients);
