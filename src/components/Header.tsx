@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bars3Icon, XMarkIcon, ArrowTrendingUpIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Bars3Icon, XMarkIcon, ArrowTrendingUpIcon, SparklesIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
   const navigation = [
     { name: 'Home', href: '/', id: 'home' },
-    { name: 'Services', href: '/#services', id: 'services' },
+    { 
+      name: 'Services', 
+      href: '/#services', 
+      id: 'services',
+      dropdown: true,
+      items: [
+        { name: 'Website Management', href: '/services/website-management', id: 'website-management' },
+        { name: 'Facebook Ads', href: '/#facebook-ads', id: 'facebook-ads' },
+        { name: 'Shopify Growth', href: '/#shopify', id: 'shopify' }
+      ]
+    },
     { name: 'Success Stories', href: '/#testimonials', id: 'testimonials' },
     { name: 'Trial', href: '/onboarding', id: 'trial', special: true },
     { name: 'Contact', href: '/#contact', id: 'contact' },
@@ -29,6 +40,7 @@ const Header: React.FC = () => {
   const isActive = (href: string, id: string) => {
     if (href === '/') return location.pathname === '/';
     if (href === '/onboarding') return location.pathname === '/onboarding';
+    if (href === '/services/website-management') return location.pathname === '/services/website-management';
     
     // For hash links, check if we're on the home page and the hash matches
     if (href.startsWith('/#')) {
