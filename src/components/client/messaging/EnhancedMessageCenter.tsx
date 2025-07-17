@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChatBubbleLeftRightIcon,
-  EnvelopeIcon,
-  PlusIcon,
-  MagnifyingGlassIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
-  ClockIcon,
-  ExclamationCircleIcon,
-  ArrowPathIcon
-} from 'lucide-react';
+import { ChevronsLeftRightIcon as ChatBubbleLeftRightIcon, TelescopeIcon as EnvelopeIcon, PlusIcon, GlassesIcon as MagnifyingGlassIcon, ShieldCheckIcon, UserCircleIcon, ClockIcon, CircleIcon as ExclamationCircleIcon, ArrowUpIcon as ArrowPathIcon } from 'lucide-react';
 import { useEnhancedMessaging } from '../../../hooks/useEnhancedMessaging';
 import EnhancedMessageComposer from './EnhancedMessageComposer';
 import EnhancedMessageThread from './EnhancedMessageThread';
