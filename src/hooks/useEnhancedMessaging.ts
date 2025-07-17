@@ -196,7 +196,7 @@ export const useEnhancedMessaging = () => {
         .from('message_rate_limits')
         .select('message_count, reset_at')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         // PGRST116 means no rows returned, which is fine
