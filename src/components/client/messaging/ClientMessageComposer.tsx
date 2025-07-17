@@ -27,7 +27,7 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
   const { sendMessage, loading } = useMessaging();
   
   const [subject, setSubject] = useState(replyTo ? `Re: ${replyTo.subject}` : '');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState<string>('');
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   const validateForm = () => {
@@ -105,10 +105,10 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
               Send a message to our support team
             </p>
           </div>
-            aria-label="Send message"
+          </div>
           <button
             onClick={onCancel}
-            className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
@@ -215,8 +215,9 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSend}
-              disabled={loading}
-              className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !content.trim() || !subject.trim()}
+              className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              aria-label="Send message"
             >
               {loading ? (
                 <>
@@ -225,7 +226,7 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
                 </>
               ) : (
                 <>
-                  <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                  <PaperAirplaneIcon className="h-5 w-5 mr-2" />
                   Send Message
                 </>
               )}

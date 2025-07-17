@@ -27,9 +27,9 @@ const ClientMessageCenter: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [showComposer, setShowComposer] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'compose'>('messages');
-  const [isReplying, setIsReplying] = useState(false);
-  const [replyContent, setReplyContent] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  const [isReplying, setIsReplying] = useState<boolean>(false);
+  const [replyContent, setReplyContent] = useState<string>('');
+  const [isSending, setIsSending] = useState<boolean>(false);
 
   const handleMessageClick = async (messageId: string) => {
     setSelectedMessage(messageId);
@@ -54,10 +54,10 @@ const ClientMessageCenter: React.FC = () => {
   const handleReply = () => {
     setIsReplying(true);
   };
-  
+
   const handleSendReply = async () => {
     if (!replyContent.trim() || !selectedMessageData) return;
-    
+
     setIsSending(true);
     try {
       // Get admin user to send message to
@@ -67,21 +67,21 @@ const ClientMessageCenter: React.FC = () => {
         .limit(1);
 
       if (error) throw error;
-      
+
       if (!adminUsers || adminUsers.length === 0) {
         toast.error('No admin users found to send message to');
         return;
       }
-      
+
       const adminId = adminUsers[0].id;
-      
+
       await sendMessage({
         receiver_id: adminId,
         content: replyContent,
         subject: `Re: ${selectedMessageData.subject}`,
         message_type: 'direct'
       });
-      
+
       toast.success('Message sent successfully!');
       setReplyContent('');
       setIsReplying(false);
@@ -326,7 +326,7 @@ const ClientMessageCenter: React.FC = () => {
                           placeholder="Type your reply here..."
                         />
                       </div>
-                      
+
                       <div className="flex justify-end space-x-3">
                         <button
                           onClick={() => setIsReplying(false)}
@@ -339,7 +339,7 @@ const ClientMessageCenter: React.FC = () => {
                           whileTap={{ scale: 0.98 }}
                           onClick={handleSendReply}
                           disabled={!replyContent.trim() || isSending}
-                          className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                           aria-label="Send message"
                         >
                           {isSending ? (

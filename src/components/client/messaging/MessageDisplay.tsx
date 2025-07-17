@@ -134,7 +134,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ message, onReply }) => 
               <div className="flex space-x-3">
                 <button
                   onClick={onReply}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                  className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
                   <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
                   Reply to Message

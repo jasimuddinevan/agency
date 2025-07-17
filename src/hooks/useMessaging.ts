@@ -164,7 +164,6 @@ export const useMessaging = () => {
   const sendMessage = useCallback(async (messageData: SendMessageRequest) => {
     if (!user) throw new Error('User not authenticated');
 
-    console.log('Sending message with data:', messageData);
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -181,7 +180,6 @@ export const useMessaging = () => {
 
       if (error) throw error;
 
-      console.log('Message sent successfully:', data);
       // Handle broadcast message recipients
       if (messageData.message_type === 'broadcast' && messageData.recipient_ids?.length) {
         const recipients = messageData.recipient_ids.map(recipientId => ({
@@ -248,7 +246,6 @@ export const useMessaging = () => {
     if (!user) return null;
 
     try {
-      console.log('Getting thread for participant:', participantId);
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -258,8 +255,6 @@ export const useMessaging = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      
-      console.log('Thread data:', data);
 
       // Get participant info from applications table
       const { data: participantData, error: participantError } = await supabase
@@ -268,7 +263,7 @@ export const useMessaging = () => {
         .eq('id', participantId)
         .single();
         
-      if (participantError) {
+      if (participantError && participantError.code !== 'PGRST116') {
         console.error('Error fetching participant:', participantError);
         return null;
       }
@@ -276,7 +271,7 @@ export const useMessaging = () => {
       const participant = {
         id: participantData.id,
         full_name: participantData.full_name,
-        email: participantData.email
+        email: participantData.email || 'support@growthpro.com'
       };
 
       const unreadCount = data?.filter(msg => 
