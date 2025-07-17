@@ -12,7 +12,6 @@ import { useMessaging } from '../../../hooks/useMessaging';
 import MessageComposer from './MessageComposer';
 import MessageThread from './MessageThread';
 import MessageList from './MessageList';
-import ClientSelector from './ClientSelector';
 import { ConversationSummary } from '../../../types/messaging';
 
 const MessageCenter: React.FC = () => {
@@ -40,7 +39,10 @@ const MessageCenter: React.FC = () => {
 
   const handleConversationSelect = async (participantId: string) => {
     setSelectedConversation(participantId);
-    await getThread(participantId);
+    const thread = await getThread(participantId);
+    if (thread) {
+      setCurrentThread(thread);
+    }
   };
 
   const handleNewMessage = () => {

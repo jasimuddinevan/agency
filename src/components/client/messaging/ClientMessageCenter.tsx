@@ -10,6 +10,7 @@ import {
 import { useMessaging } from '../../../hooks/useMessaging';
 import MessageDisplay from './MessageDisplay';
 import ClientMessageComposer from './ClientMessageComposer';
+import MessageReply from './MessageReply';
 import NotificationBadge from './NotificationBadge';
 
 const ClientMessageCenter: React.FC = () => {
@@ -25,6 +26,7 @@ const ClientMessageCenter: React.FC = () => {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [showComposer, setShowComposer] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'compose'>('messages');
+  const [isReplying, setIsReplying] = useState(false);
 
   const handleMessageClick = async (messageId: string) => {
     setSelectedMessage(messageId);
@@ -41,8 +43,13 @@ const ClientMessageCenter: React.FC = () => {
 
   const handleMessageSent = () => {
     setShowComposer(false);
+    setIsReplying(false);
     setActiveTab('messages');
     refreshData();
+  };
+  
+  const handleReply = () => {
+    setIsReplying(true);
   };
 
   const formatTime = (dateString: string) => {
@@ -205,7 +212,7 @@ const ClientMessageCenter: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           <AnimatePresence mode="wait">
-            {activeTab === 'compose' || showComposer ? (
+            {(activeTab === 'compose' && showComposer && !isReplying) ? (
               <motion.div
                 key="composer"
                 initial={{ opacity: 0, x: 20 }}
@@ -221,6 +228,25 @@ const ClientMessageCenter: React.FC = () => {
                   }}
                 />
               </motion.div>
+            ) : isReplying && selectedMessageData ? (
+              <motion.div
+                key="reply"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-full"
+              >
+                <MessageReply
+                  onMessageSent={handleMessageSent}
+                  onCancel={() => {
+                    setIsReplying(false);
+                  }}
+                  replyTo={{
+                    id: selectedMessageData.id,
+                    subject: selectedMessageData.subject
+                  }}
+                />
+              </motion.div>
             ) : selectedMessageData ? (
               <motion.div
                 key="message"
@@ -231,7 +257,7 @@ const ClientMessageCenter: React.FC = () => {
               >
                 <MessageDisplay
                   message={selectedMessageData}
-                  onReply={() => setShowComposer(true)}
+                  onReply={handleReply}
                 />
               </motion.div>
             ) : (

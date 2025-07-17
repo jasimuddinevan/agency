@@ -248,6 +248,7 @@ export const useMessaging = () => {
     if (!user) return null;
 
     try {
+      console.log('Getting thread for participant:', participantId);
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -257,12 +258,26 @@ export const useMessaging = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      
+      console.log('Thread data:', data);
 
-      const participant = data?.[0]?.sender?.id === participantId 
-        ? data[0].sender 
-        : data?.[0]?.receiver;
+      // Get participant info from applications table
+      const { data: participantData, error: participantError } = await supabase
+        .from('applications')
+        .select('id, full_name, email')
+        .eq('id', participantId)
+        .single();
+        
+      if (participantError) {
+        console.error('Error fetching participant:', participantError);
+        return null;
+      }
 
-      if (!participant) return null;
+      const participant = {
+        id: participantData.id,
+        full_name: participantData.full_name,
+        email: participantData.email
+      };
 
       const unreadCount = data?.filter(msg => 
         msg.receiver_id === user.id && !msg.is_read
@@ -275,7 +290,6 @@ export const useMessaging = () => {
         last_message: data?.[data.length - 1] || data?.[0]
       };
 
-      setCurrentThread(thread);
       return thread;
     } catch (err) {
       console.error('Error fetching thread:', err);
