@@ -35,7 +35,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ message, onReply }) => 
   return (
     <div className="h-full flex flex-col">
       {/* Message Header */}
-      <div className="p-6 border-b border-gray-200 bg-white">
+      <div className="p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-4">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -73,8 +73,9 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ message, onReply }) => 
           
           {!isFromMe && (
             <button
+              aria-label="Reply to message"
               onClick={onReply}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
               Reply

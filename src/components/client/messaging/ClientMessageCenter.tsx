@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChatBubbleLeftRightIcon,
+  PaperAirplaneIcon,
   PlusIcon,
   EnvelopeIcon,
   ShieldCheckIcon,
@@ -27,6 +28,8 @@ const ClientMessageCenter: React.FC = () => {
   const [showComposer, setShowComposer] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'compose'>('messages');
   const [isReplying, setIsReplying] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const handleMessageClick = async (messageId: string) => {
     setSelectedMessage(messageId);
@@ -50,6 +53,45 @@ const ClientMessageCenter: React.FC = () => {
   
   const handleReply = () => {
     setIsReplying(true);
+  };
+  
+  const handleSendReply = async () => {
+    if (!replyContent.trim() || !selectedMessageData) return;
+    
+    setIsSending(true);
+    try {
+      // Get admin user to send message to
+      const { data: adminUsers, error } = await supabase
+        .from('admin_users')
+        .select('id')
+        .limit(1);
+
+      if (error) throw error;
+      
+      if (!adminUsers || adminUsers.length === 0) {
+        toast.error('No admin users found to send message to');
+        return;
+      }
+      
+      const adminId = adminUsers[0].id;
+      
+      await sendMessage({
+        receiver_id: adminId,
+        content: replyContent,
+        subject: `Re: ${selectedMessageData.subject}`,
+        message_type: 'direct'
+      });
+      
+      toast.success('Message sent successfully!');
+      setReplyContent('');
+      setIsReplying(false);
+      refreshData();
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -261,25 +303,82 @@ const ClientMessageCenter: React.FC = () => {
                 />
               </motion.div>
             ) : (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex items-center justify-center bg-gray-50"
-              >
-                <div className="text-center">
-                  <ChatBubbleLeftRightIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a message</h3>
-                  <p className="text-gray-600 mb-6">Choose a message from the sidebar to read it</p>
-                  <button
-                    onClick={handleNewMessage}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+              <>
+                {isReplying ? (
+                  <motion.div
+                    key="reply-box"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex-1 flex flex-col p-6 bg-gray-50"
                   >
-                    Start New Conversation
-                  </button>
-                </div>
-              </motion.div>
+                    <div className="flex-1">
+                      <div className="mb-4">
+                        <label htmlFor="replyContent" className="block text-sm font-medium text-gray-700 mb-2">
+                          Your Reply
+                        </label>
+                        <textarea
+                          id="replyContent"
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          rows={8}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                          placeholder="Type your reply here..."
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          onClick={() => setIsReplying(false)}
+                          className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          Cancel
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSendReply}
+                          disabled={!replyContent.trim() || isSending}
+                          className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Send message"
+                        >
+                          {isSending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                              Send Message
+                            </>
+                          )}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex-1 flex items-center justify-center bg-gray-50"
+                  >
+                    <div className="text-center">
+                      <ChatBubbleLeftRightIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Select a message</h3>
+                      <p className="text-gray-600 mb-6">Choose a message from the sidebar to read it</p>
+                      <button
+                        onClick={handleNewMessage}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                      >
+                        Start New Conversation
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </>
             )}
           </AnimatePresence>
         </div>

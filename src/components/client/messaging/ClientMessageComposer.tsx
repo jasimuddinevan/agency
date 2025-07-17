@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { useMessaging } from '../../../hooks/useMessaging';
 import { supabase } from '../../../lib/supabase';
@@ -104,9 +105,10 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
               Send a message to our support team
             </p>
           </div>
+            aria-label="Send message"
           <button
             onClick={onCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            className="flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
