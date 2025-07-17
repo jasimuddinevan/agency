@@ -12,6 +12,7 @@ import OverviewStats from '../components/client/overview/OverviewStats';
 import ActivityTimeline from '../components/client/overview/ActivityTimeline';
 import ServicesList from '../components/client/services/ServicesList';
 import ClientMessageCenter from '../components/client/messaging/ClientMessageCenter';
+import EnhancedMessageCenter from '../components/client/messaging/EnhancedMessageCenter';
 import ProfileSettings from '../components/client/profile/ProfileSettings';
 
 // Import types
@@ -338,7 +339,7 @@ const ClientDashboardPage: React.FC = () => {
                 transition={{ duration: 0.3 }}
                 className="h-[calc(100vh-200px)]"
               >
-                <ClientMessageCenter />
+                <EnhancedMessageCenter />
               </motion.div>
             )}
 
