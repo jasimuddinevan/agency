@@ -105,7 +105,6 @@ const ClientMessageComposer: React.FC<ClientMessageComposerProps> = ({
               Send a message to our support team
             </p>
           </div>
-          </div>
           <button
             onClick={onCancel}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
